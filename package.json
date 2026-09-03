@@ -1,0 +1,8 @@
+{
+  "name": "imnoshi-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "npm install --prefix imnoshi-web && npm run build --prefix imnoshi-web",
+    "start": "npm run start --prefix imnoshi-web"
+  }
+}
