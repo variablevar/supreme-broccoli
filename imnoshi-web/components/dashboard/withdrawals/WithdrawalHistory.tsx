@@ -35,11 +35,11 @@ export function WithdrawalHistory() {
             {withdrawals.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="text-foreground/70">
-                  {new Date(row.created_at).toLocaleDateString()}
+                  {new Date(row.created_at).toLocaleString()}
                 </TableCell>
                 <TableCell className="capitalize text-foreground/70">{row.method}</TableCell>
                 <TableCell className="text-foreground font-mono">
-                  ${Number(row.amount).toLocaleString()}
+                  {Number(row.amount).toLocaleString()} USDT
                 </TableCell>
                 <TableCell>
                   <Badge

@@ -1,76 +1,56 @@
-export const APP_NAME = 'Imnoshi';
+export const APP_NAME = 'IMNOSHI';
 
 export const NAV_LINKS = [
   { label: 'Engines', href: '#engines' },
-  { label: 'Pricing', href: '#pricing' },
+  { label: 'Monitor Node', href: '#pricing' },
   { label: 'Stats', href: '#stats' },
   { label: 'Dashboard', href: '/dashboard' },
 ];
 
 export const DASHBOARD_NAV = [
   { label: 'Overview', href: '/dashboard', icon: 'LayoutDashboard' },
-  { label: 'Wallet', href: '/wallet', icon: 'Wallet' },
-  { label: 'Staking', href: '/staking', icon: 'Coins' },
-  { label: 'Rewards', href: '/rewards', icon: 'Gift' },
+  { label: 'Devices', href: '/devices', icon: 'Cpu' },
+  { label: 'Wallets', href: '/wallet', icon: 'Wallet' },
+  { label: 'Earnings', href: '/rewards', icon: 'Gift' },
   { label: 'Withdrawals', href: '/withdrawals', icon: 'ArrowDownLeft' },
   { label: 'Transactions', href: '/transactions', icon: 'Receipt' },
   { label: 'Settings', href: '/settings', icon: 'Settings' },
+  { label: 'Contact', href: '/support', icon: 'Mail' },
 ];
 
 export const ENGINE_CARDS = [
   {
     number: 1,
-    title: 'GPU Mining Engine',
+    title: 'Mining Engine',
     description:
-      'Dedicated GPU cluster for crypto mining. 60–70% of power directed to mining with 90% utilization during rental windows.',
+      'Dedicated GPU power runs verified mining windows and reports performance into the customer monitor node.',
     features: [
-      '2–3 hour daily mining cycles',
-      '90% rental utilization ($8–10/day)',
-      '24-hour reward polls',
+      'GPU availability checks',
+      'Daily USDT earning entries',
+      'UID-linked device telemetry',
     ],
   },
   {
     number: 2,
-    title: '70B Quant LLM',
+    title: 'LLM Work Engine',
     description:
-      'Adaptive trading engine operating as an exchanger in the same coin as mined. Stake vault balance acts as a reward multiplier.',
+      'A dedicated model lane handles useful LLM workloads and converts its output into account-level USDT earnings.',
     features: [
-      '24h adaptive market trading',
-      'Stake vault reward multiplier',
-      'Same-coin exchange arbitrage',
+      'Model status visibility',
+      'Workload and uptime reporting',
+      'Per-device revenue accounting',
     ],
   },
   {
     number: 3,
-    title: 'Quant Server',
+    title: 'Exchange Engine',
     description:
-      'Profit-sharing server handling withdrawals, trading, exchanging, and holding across main wallet and user wallets.',
+      'The exchange layer trades and settles revenue into USDT while keeping withdrawal records transparent.',
     features: [
-      'Profit sharing distribution',
-      'VIP withdrawal scheduling',
-      'Multi-wallet settlement',
+      'Trading activity summaries',
+      'USDT settlement ledger',
+      '7-day withdrawal cycle',
     ],
-  },
-];
-
-export const BUILD_OPTIONS = [
-  {
-    name: 'Full Build',
-    price: '£2,200–2,600',
-    description: 'Complete GPU rig + stake allocation. Maximum reward potential.',
-    features: ['GPU rig ownership', 'Full stake multiplier', 'Electricity: ~£500-600/mo', 'Highest reward share'],
-  },
-  {
-    name: 'Half Build',
-    price: '£1,200 + £800 stake',
-    description: 'Balanced entry with dedicated hardware and locked stake.',
-    features: ['Entry-level GPU rig', '£800 locked stake', 'Lower electricity draw', 'Mid-tier rewards'],
-  },
-  {
-    name: 'Rental',
-    price: '£60/month + £2,000 stake',
-    description: 'No hardware or electricity costs. 20% more reward with stake backing.',
-    features: ['No hardware upkeep', 'No electricity bill', '£2,000 stake required', '+20% reward boost'],
   },
 ];
 

@@ -1,10 +1,10 @@
 'use client';
 import { GlassCard } from '@/components/shared/GlassCard';
 import { useAccountData } from '@/hooks/useAccountData';
-import { Clock, Coins, Gift, ArrowDownLeft } from 'lucide-react';
+import { Clock, Gift, ArrowDownLeft } from 'lucide-react';
 
 interface ActivityItem {
-  icon: typeof Coins;
+  icon: typeof Gift;
   label: string;
   value: string;
   time: string;
@@ -12,27 +12,20 @@ interface ActivityItem {
 }
 
 export function RecentActivity() {
-  const { rewards, withdrawals, stakes, loading } = useAccountData();
+  const { rewards, withdrawals, loading } = useAccountData();
 
   const items: ActivityItem[] = [
-    ...stakes.map((s) => ({
-      icon: Coins,
-      label: `Staked (${s.lock_period_months}mo @ ${Number(s.apy)}% APY)`,
-      value: `-$${Number(s.amount).toLocaleString()}`,
-      time: new Date(s.started_at).toLocaleString(),
-      timestamp: new Date(s.started_at).getTime(),
-    })),
     ...rewards.map((r) => ({
       icon: Gift,
-      label: `Reward (${r.source.replace('_', ' ')})`,
-      value: `+$${Number(r.amount).toLocaleString()}`,
+      label: `Earning (${r.source.replace('_', ' ')})`,
+      value: `+${Number(r.amount).toLocaleString()} USDT`,
       time: new Date(r.created_at).toLocaleString(),
       timestamp: new Date(r.created_at).getTime(),
     })),
     ...withdrawals.map((w) => ({
       icon: ArrowDownLeft,
       label: `Withdrawal (${w.method}) — ${w.status}`,
-      value: `-$${Number(w.amount).toLocaleString()}`,
+      value: `-${Number(w.amount).toLocaleString()} USDT`,
       time: new Date(w.created_at).toLocaleString(),
       timestamp: new Date(w.created_at).getTime(),
     })),
@@ -53,7 +46,7 @@ export function RecentActivity() {
         <p className="text-muted-foreground text-sm">Loading…</p>
       ) : items.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          No activity yet. Your stakes, rewards and withdrawals will appear here.
+          No activity yet. Your earnings and withdrawals will appear here.
         </p>
       ) : (
         <ul className="space-y-4">

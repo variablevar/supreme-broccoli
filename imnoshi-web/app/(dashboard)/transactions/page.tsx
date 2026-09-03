@@ -21,33 +21,24 @@ interface TxRow {
 }
 
 export default function TransactionsPage() {
-  const { rewards, withdrawals, stakes, loading } = useAccountData();
+  const { rewards, withdrawals, loading } = useAccountData();
 
   const transactions: TxRow[] = [
-    ...stakes.map((s) => ({
-      id: s.id,
-      type: 'Stake',
-      amount: `-$${Number(s.amount).toLocaleString()}`,
-      positive: false,
-      date: new Date(s.started_at).toLocaleDateString(),
-      timestamp: new Date(s.started_at).getTime(),
-      status: s.status,
-    })),
     ...rewards.map((r) => ({
       id: r.id,
-      type: `Reward (${r.source.replace('_', ' ')})`,
-      amount: `+$${Number(r.amount).toLocaleString()}`,
+      type: `Earning (${r.source.replace('_', ' ')})`,
+      amount: `+${Number(r.amount).toLocaleString()} USDT`,
       positive: true,
-      date: new Date(r.created_at).toLocaleDateString(),
+      date: new Date(r.created_at).toLocaleString(),
       timestamp: new Date(r.created_at).getTime(),
       status: r.status,
     })),
     ...withdrawals.map((w) => ({
       id: w.id,
       type: 'Withdrawal',
-      amount: `-$${Number(w.amount).toLocaleString()}`,
+      amount: `-${Number(w.amount).toLocaleString()} USDT`,
       positive: false,
-      date: new Date(w.created_at).toLocaleDateString(),
+      date: new Date(w.created_at).toLocaleString(),
       timestamp: new Date(w.created_at).getTime(),
       status: w.status,
     })),
@@ -57,7 +48,7 @@ export default function TransactionsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="font-space text-3xl font-bold text-foreground mb-2">Transactions</h1>
-        <p className="text-muted-foreground">Complete history of deposits, stakes, rewards and withdrawals.</p>
+        <p className="text-muted-foreground">Complete USDT earning and withdrawal history with time and date.</p>
       </div>
 
       <GlassCard>

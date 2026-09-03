@@ -4,9 +4,10 @@ import { GlassCard } from '@/components/shared/GlassCard';
 import { useDashboardStore } from '@/stores/useDashboardStore';
 import { getChainBalance } from '@/lib/web3';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { CreateWallet } from '@/components/dashboard/wallet/CreateWallet';
-import { Copy, Eye, EyeOff, Wallet } from 'lucide-react';
+import { Copy, Eye, EyeOff, Pencil, Trash2, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PRICE_IDS: Record<string, string> = {
@@ -24,6 +25,8 @@ export default function WalletPage() {
   const [balances, setBalances] = useState<Record<string, number | null>>({});
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [revealedSeeds, setRevealedSeeds] = useState<Record<string, boolean>>({});
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draftAddress, setDraftAddress] = useState('');
 
   // Fetch live on-chain balances for each wallet address.
   useEffect(() => {
@@ -65,13 +68,46 @@ export default function WalletPage() {
     toast.success(`${label} copied to clipboard`);
   };
 
+  const remove = async (address: string, id?: string) => {
+    useDashboardStore.getState().removeWallet(address);
+    await fetch('/api/wallets', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, address }),
+    }).catch(() => {});
+    toast.success('Wallet deleted');
+  };
+
+  const saveAddress = async (wallet: typeof wallets[number]) => {
+    const address = draftAddress.trim();
+    if (!address) return;
+    if (wallet.id) {
+      const res = await fetch('/api/wallets', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: wallet.id,
+          symbol: wallet.symbol,
+          chain: wallet.chain,
+          address,
+        }),
+      });
+      if (!res.ok) {
+        toast.error('Could not update wallet');
+        return;
+      }
+    }
+    useDashboardStore.getState().removeWallet(wallet.address);
+    useDashboardStore.getState().addWallet({ ...wallet, address });
+    setEditing(null);
+    toast.success('Wallet updated');
+  };
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-space text-3xl font-bold text-foreground mb-2">Wallet</h1>
-        <p className="text-muted-foreground">
-          Create your own wallet — the seed phrase is generated in your browser and never sent to our servers.
-        </p>
+        <p className="text-muted-foreground">View, copy, edit and delete wallet addresses connected to your UID.</p>
       </div>
 
       <GlassCard>
@@ -117,6 +153,7 @@ export default function WalletPage() {
               const balance = balances[wallet.address];
               const price = prices[wallet.symbol];
               const symbol = wallet.symbol;
+              const isEditing = editing === wallet.address;
               return (
                 <GlassCard key={wallet.address} className="flex flex-col gap-4">
                   <div className="flex items-center justify-between">
@@ -129,21 +166,49 @@ export default function WalletPage() {
                         <Badge variant="secondary" className="text-xs">{wallet.chain}</Badge>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditing(wallet.address);
+                          setDraftAddress(wallet.address);
+                        }}
+                        className="text-muted-foreground hover:text-primary"
+                        aria-label="Edit wallet"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        onClick={() => remove(wallet.address, wallet.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="Delete wallet"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
 
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Address</p>
-                    <div className="flex items-center gap-2">
-                      <code className="font-mono text-xs text-foreground break-all leading-relaxed">
-                        {wallet.address}
-                      </code>
-                      <button
-                        onClick={() => copy(wallet.address, 'Address')}
-                        className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <Copy size={14} />
-                      </button>
-                    </div>
+                    {isEditing ? (
+                      <div className="flex gap-2">
+                        <Input value={draftAddress} onChange={(e) => setDraftAddress(e.target.value)} className="font-mono text-xs" />
+                        <button onClick={() => saveAddress(wallet)} className="rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground">
+                          Save
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono text-xs text-foreground break-all leading-relaxed">
+                          {wallet.address}
+                        </code>
+                        <button
+                          onClick={() => copy(wallet.address, 'Address')}
+                          className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <Copy size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />

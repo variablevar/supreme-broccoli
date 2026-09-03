@@ -9,7 +9,7 @@ export function LiveStatsTicker() {
     { label: 'Active GPUs', value: stats.totalGpus, prefix: '', suffix: '' },
     { label: 'Active Miners', value: stats.activeMiners, prefix: '', suffix: '' },
     { label: 'Total Hashrate', value: stats.totalHashrate, prefix: '', suffix: ' PH/s', decimals: 2 },
-    { label: 'Daily Rewards', value: stats.dailyRewards, prefix: '$', suffix: '', decimals: 0 },
+    { label: 'Daily USDT', value: stats.dailyRewards, prefix: '', suffix: ' USDT', decimals: 0 },
   ];
 
   return (

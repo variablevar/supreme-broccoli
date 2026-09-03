@@ -1,6 +1,6 @@
-# Imnoshi — GT Quant Engine
+# IMNOSHI — Monitor Node Engine
 
-GPU-powered quant engine dashboard: staking, 24h reward polls, withdrawals, and multi-chain wallets.
+GPU-powered monitor node dashboard for UID-linked devices, USDT earnings, withdrawals, and multi-chain wallets.
 
 ## Stack
 
@@ -41,13 +41,12 @@ curl -X POST https://your-domain/api/fleet \
   -d '{"total_gpus":1240,"active_miners":856,"total_hashrate":4200,"daily_rewards":12480}'
 ```
 
-## Reward polls
+## Earnings
 
-Rewards settle lazily: every 24h period with an active stake produces a pending
-`staking_bonus` reward (`amount × APY/365 × multiplier`), credited on the user's
-next `GET /api/rewards`. Users claim via POST /api/rewards. No cron needed.
+Customer earnings are recorded in USDT from mining, LLM work, exchange activity,
+and trading. Users can settle pending earnings into their dashboard balance.
 
 ## Withdrawal rules
 
-Standard accounts: 1 withdrawal/month. VIP: 2/month. Enforced server-side in
-`POST /api/withdrawals` along with the available-balance check.
+Withdrawals have a 100 USDT minimum and are available once every 7 days.
+Users can pay out to saved crypto wallets or Revolut bank details.

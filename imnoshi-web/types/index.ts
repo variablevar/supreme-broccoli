@@ -3,9 +3,12 @@ export interface User {
   email: string;
   walletAddress?: string;
   vipStatus: boolean;
+  language: LanguageCode;
+  theme: ThemePreference;
 }
 
 export interface ConnectedWallet {
+  id?: string;
   providerId: string;
   providerName: string;
   symbol: string; // BTC, ETH, SOL, LTC, DOGE, TRX, XMR
@@ -16,38 +19,96 @@ export interface ConnectedWallet {
 }
 
 export interface EngineStatus {
-  engine1: { load: number; status: 'mining' | 'renting' | 'idle' };
+  engine1: { load: number; status: 'mining' | 'online' | 'idle' };
   engine2: { load: number; status: 'training' | 'trading' | 'idle' };
   engine3: { load: number; status: 'active' | 'maintenance' };
 }
 
+export interface MonitorDevice {
+  id: string;
+  uid: string;
+  name: string;
+  status: 'online' | 'syncing' | 'offline' | 'maintenance';
+  gpuModel: string;
+  modelName: string;
+  uptimePercent: number;
+  hashRate: number;
+  aiLoad: number;
+  tradingLoad: number;
+  todayUsdt: number;
+  totalUsdt: number;
+  lastSeen: string;
+}
+
+export interface PayoutDestination {
+  id: string;
+  type: 'crypto' | 'revolut';
+  label: string;
+  network?: 'TRC20' | 'ERC20' | 'BEP20' | 'SOL';
+  address?: string;
+  revolutName?: string;
+  revolutTag?: string;
+  iban?: string;
+  updatedAt: string;
+}
+
+export type LanguageCode =
+  | 'bn'
+  | 'ar'
+  | 'ur'
+  | 'pk'
+  | 'hi'
+  | 'en-US'
+  | 'en-GB'
+  | 'de'
+  | 'ja'
+  | 'zh'
+  | 'nl'
+  | 'es'
+  | 'fr';
+
+export type ThemePreference = 'dark' | 'light' | 'system';
+
 export interface DashboardState {
   user: User;
   balance: number;
-  stakedAmount: number;
+  todayEarnings: number;
+  totalEarnings: number;
   engineStatus: EngineStatus;
   rewards: { pending: number; claimed: number; lastClaim: string };
-  withdrawals: { monthlyLimit: number; used: number; nextReset: string };
+  withdrawals: { minimum: number; cooldownDays: number; nextEligibleAt: string };
   wallets: ConnectedWallet[];
+  devices: MonitorDevice[];
+  payoutDestinations: PayoutDestination[];
+  language: LanguageCode;
+  theme: ThemePreference;
 
   setUser: (user: User) => void;
   updateBalance: (amount: number) => void;
-  setStakedAmount: (amount: number) => void;
+  setEarnings: (data: { todayEarnings: number; totalEarnings: number; balance: number }) => void;
   updateEngineStatus: (status: EngineStatus) => void;
   claimReward: () => void;
   addWallet: (wallet: ConnectedWallet) => void;
   removeWallet: (address: string) => void;
   setWallets: (wallets: ConnectedWallet[]) => void;
+  setDevices: (devices: MonitorDevice[]) => void;
+  upsertPayoutDestination: (destination: PayoutDestination) => void;
+  removePayoutDestination: (id: string) => void;
+  setLanguage: (language: LanguageCode) => void;
+  setTheme: (theme: ThemePreference) => void;
   syncFromServer: (data: {
     uid: string;
     email: string;
     vipStatus: boolean;
+    language: LanguageCode;
+    theme: ThemePreference;
     balance: number;
-    stakedAmount: number;
+    todayEarnings: number;
+    totalEarnings: number;
     rewardsPending: number;
     rewardsClaimed: number;
     lastClaim: string;
-    withdrawalsUsed: number;
+    nextEligibleAt: string;
   }) => void;
 }
 
@@ -70,12 +131,13 @@ export interface Stake {
 export interface WithdrawalPayload {
   amount: number;
   method: 'crypto' | 'bank';
+  destinationId?: string;
 }
 
 export interface Reward {
   id: string;
   amount: number;
-  source: 'mining' | 'renting' | 'trading' | 'staking_bonus';
+  source: 'mining' | 'llm' | 'exchange' | 'trading';
   status: 'pending' | 'claimed';
   created_at: string;
   claimed_at?: string;
@@ -89,4 +151,5 @@ export interface Withdrawal {
   vip_withdrawal: boolean;
   created_at: string;
   processed_at?: string;
+  destination_label?: string;
 }

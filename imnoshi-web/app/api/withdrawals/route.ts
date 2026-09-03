@@ -5,8 +5,9 @@ import { ensureDbUser, clerkIdToUuid } from '@/lib/userId';
 import { z } from 'zod';
 
 const schema = z.object({
-  amount: z.number().positive(),
+  amount: z.number().min(100),
   method: z.enum(['crypto', 'bank']),
+  destinationId: z.string().uuid().optional(),
 });
 
 export async function POST(req: Request) {
@@ -23,32 +24,26 @@ export async function POST(req: Request) {
     const supabase = createAdminClient();
     const dbUser = await ensureDbUser(supabase, userId);
 
-    // --- Monthly withdrawal limit: 1 for standard, 2 for VIP (per spec) ---
-    const monthlyLimit = dbUser.vip_status ? 2 : 1;
-    const monthStart = new Date();
-    monthStart.setUTCDate(1);
-    monthStart.setUTCHours(0, 0, 0, 0);
-
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const { count } = await supabase
       .from('withdrawals')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', dbUser.id)
       .neq('status', 'rejected')
-      .gte('created_at', monthStart.toISOString());
+      .gte('created_at', sevenDaysAgo.toISOString());
 
-    if ((count ?? 0) >= monthlyLimit) {
+    if ((count ?? 0) > 0) {
       return NextResponse.json(
-        { error: `Monthly withdrawal limit reached (${monthlyLimit} per month)` },
+        { error: 'Withdrawals are available once every 7 days' },
         { status: 429 }
       );
     }
 
     // --- Server-side balance check ---
-    // available = claimed rewards - non-rejected withdrawals - active stakes
-    const [rewardsRes, withdrawalsRes, stakesRes] = await Promise.all([
+    // available = claimed customer earnings - non-rejected withdrawals
+    const [rewardsRes, withdrawalsRes] = await Promise.all([
       supabase.from('rewards').select('amount, status').eq('user_id', dbUser.id),
       supabase.from('withdrawals').select('amount, status').eq('user_id', dbUser.id),
-      supabase.from('stakes').select('amount').eq('user_id', dbUser.id).eq('status', 'active'),
     ]);
 
     const claimed = (rewardsRes.data ?? [])
@@ -57,14 +52,24 @@ export async function POST(req: Request) {
     const withdrawn = (withdrawalsRes.data ?? [])
       .filter((w) => w.status !== 'rejected')
       .reduce((s, w) => s + Number(w.amount), 0);
-    const staked = (stakesRes.data ?? []).reduce((s, x) => s + Number(x.amount), 0);
-    const available = Math.max(0, claimed - withdrawn - staked);
+    const available = Math.max(0, claimed - withdrawn);
 
     if (parsed.data.amount > available) {
       return NextResponse.json(
         { error: `Insufficient balance. Available: $${available.toFixed(2)}` },
         { status: 400 }
       );
+    }
+
+    let destinationLabel = parsed.data.method === 'crypto' ? 'Crypto wallet' : 'Revolut bank';
+    if (parsed.data.destinationId) {
+      const { data: destination } = await supabase
+        .from('payout_destinations')
+        .select('label')
+        .eq('id', parsed.data.destinationId)
+        .eq('user_id', dbUser.id)
+        .maybeSingle();
+      destinationLabel = destination?.label ?? destinationLabel;
     }
 
     const { data, error } = await supabase
@@ -74,6 +79,8 @@ export async function POST(req: Request) {
         amount: parsed.data.amount,
         method: parsed.data.method,
         vip_withdrawal: dbUser.vip_status ?? false,
+        destination_id: parsed.data.destinationId ?? null,
+        destination_label: destinationLabel,
       })
       .select()
       .single();

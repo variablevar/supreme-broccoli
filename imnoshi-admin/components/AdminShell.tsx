@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { BrandLogo } from '@/components/BrandLogo';
 import { LayoutDashboard, Users, ArrowDownLeft, Gift, Activity } from 'lucide-react';
 
 const NAV = [
@@ -19,11 +20,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-background">
       <aside className="hidden md:flex flex-col w-60 shrink-0 border-r border-border">
         <div className="p-5 flex items-center gap-3 border-b border-border">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground">
-            I
-          </div>
+          <BrandLogo size={46} showWordmark={false} />
           <div>
-            <p className="font-space font-bold text-foreground">Imnoshi</p>
+            <p className="live-brand font-space font-bold">IMNOSHI</p>
             <p className="text-xs text-muted-foreground">Admin Panel</p>
           </div>
         </div>

@@ -1,15 +1,17 @@
 'use client';
 import { GlassCard } from '@/components/shared/GlassCard';
 import { useDashboardStore } from '@/stores/useDashboardStore';
+import { useI18n } from '@/hooks/useI18n';
 import { Activity, Cpu, Server } from 'lucide-react';
 
 export function EngineStatusGauges() {
   const { engineStatus } = useDashboardStore();
+  const { t } = useI18n();
 
   const engines = [
-    { key: 'engine1', label: 'GPU Mining', icon: Cpu, data: engineStatus.engine1 },
-    { key: 'engine2', label: 'Quant LLM', icon: Activity, data: engineStatus.engine2 },
-    { key: 'engine3', label: 'Quant Server', icon: Server, data: engineStatus.engine3 },
+    { key: 'engine1', label: t('miningEngine'), icon: Cpu, data: engineStatus.engine1 },
+    { key: 'engine2', label: t('llmEngine'), icon: Activity, data: engineStatus.engine2 },
+    { key: 'engine3', label: t('exchangeEngine'), icon: Server, data: engineStatus.engine3 },
   ];
 
   return (
@@ -30,7 +32,7 @@ export function EngineStatusGauges() {
             <div className="mt-auto">
               <div className="flex items-end justify-between mb-2">
                 <span className="text-3xl font-bold font-space text-foreground">{engine.data.load}%</span>
-                <span className="text-sm text-foreground/50">Load</span>
+                <span className="text-sm text-foreground/50">{t('load')}</span>
               </div>
               <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                 <div

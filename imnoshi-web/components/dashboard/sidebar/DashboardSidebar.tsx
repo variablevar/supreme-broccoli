@@ -3,38 +3,51 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { DASHBOARD_NAV } from '@/lib/constants';
+import { BrandLogo } from '@/components/shared/BrandLogo';
 import { useDashboardStore } from '@/stores/useDashboardStore';
+import { useI18n } from '@/hooks/useI18n';
 import {
   LayoutDashboard,
   Wallet,
-  Coins,
+  Cpu,
   Gift,
   ArrowDownLeft,
   Receipt,
   Settings,
+  Mail,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ElementType> = {
   LayoutDashboard,
   Wallet,
-  Coins,
+  Cpu,
   Gift,
   ArrowDownLeft,
   Receipt,
   Settings,
+  Mail,
+};
+
+const labelKey: Record<string, 'overview' | 'devices' | 'wallets' | 'earnings' | 'withdrawals' | 'transactions' | 'settings' | 'contact'> = {
+  Overview: 'overview',
+  Devices: 'devices',
+  Wallets: 'wallets',
+  Earnings: 'earnings',
+  Withdrawals: 'withdrawals',
+  Transactions: 'transactions',
+  Settings: 'settings',
+  Contact: 'contact',
 };
 
 export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const vipStatus = useDashboardStore((s) => s.user.vipStatus);
+  const devices = useDashboardStore((s) => s.devices);
+  const { t } = useI18n();
 
   return (
     <aside className="flex flex-col w-64 h-screen sticky top-0 glass-strong border-r border-border/10">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center font-bold text-primary-foreground">
-          I
-        </div>
-        <span className="font-space font-bold text-foreground text-lg">Imnoshi</span>
+        <BrandLogo size={52} />
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
@@ -54,21 +67,21 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
               )}
             >
               <Icon size={18} />
-              {item.label}
-            </Link>
+                {t(labelKey[item.label])}
+              </Link>
           );
         })}
       </nav>
 
       <div className="p-4">
         <div className="glass rounded-xl p-4">
-          <p className="text-xs text-foreground/40 mb-2">VIP Status</p>
+          <p className="text-xs text-foreground/40 mb-2">{t('connectedDevices')}</p>
           <div className="flex items-center gap-2">
-            <div className={cn('w-2 h-2 rounded-full', vipStatus ? 'bg-success' : 'bg-primary')} />
-            <span className="text-sm text-foreground">{vipStatus ? 'VIP' : 'Standard'}</span>
+            <div className="w-2 h-2 rounded-full bg-success" />
+            <span className="text-sm text-foreground">{devices.length}</span>
           </div>
           <p className="text-xs text-foreground/40 mt-1">
-            {vipStatus ? '2 withdrawals / month' : '1 withdrawal / month'}
+            {t('sevenDayCycle')}
           </p>
         </div>
       </div>

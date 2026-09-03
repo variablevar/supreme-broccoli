@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { NAV_LINKS } from '@/lib/constants';
 import { MagneticButton } from '@/components/shared/MagneticButton';
+import { BrandLogo } from '@/components/shared/BrandLogo';
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -12,10 +13,7 @@ export function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground">
-            I
-          </div>
-          <span className="font-space font-bold text-foreground text-lg">Imnoshi</span>
+          <BrandLogo size={42} />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -29,14 +27,22 @@ export function Navbar() {
             </a>
           ))}
           <Link
+            href="/contact"
+            className="text-sm text-foreground/70 hover:text-primary transition-colors"
+          >
+            Contact
+          </Link>
+          <Link
             href="/login"
             className="text-sm text-foreground/70 hover:text-primary transition-colors"
           >
             Sign In
           </Link>
-          <MagneticButton className="text-sm bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
-            Get Started
-          </MagneticButton>
+          <Link href="/purchase">
+            <MagneticButton className="text-sm bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+              Get One
+            </MagneticButton>
+          </Link>
         </div>
 
         <button
@@ -60,8 +66,14 @@ export function Navbar() {
               {link.label}
             </a>
           ))}
+          <Link href="/contact" className="block text-foreground/70 hover:text-primary" onClick={() => setMobileOpen(false)}>
+            Contact
+          </Link>
           <Link href="/login" className="block text-foreground/70 hover:text-primary">
             Sign In
+          </Link>
+          <Link href="/purchase" className="block text-primary font-semibold" onClick={() => setMobileOpen(false)}>
+            Get One
           </Link>
         </div>
       )}

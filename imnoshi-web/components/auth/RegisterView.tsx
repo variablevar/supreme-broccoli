@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { SignUp } from '@clerk/nextjs';
+import { BrandLogo } from '@/components/shared/BrandLogo';
+import { LiveBrand } from '@/components/shared/LiveBrand';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function RegisterView() {
@@ -9,11 +11,11 @@ export function RegisterView() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-primary flex items-center justify-center font-bold text-primary-foreground text-lg">
-              I
-            </div>
+            <BrandLogo size={96} showWordmark={false} priority className="mx-auto mb-4 justify-center" />
             <CardTitle className="font-space text-2xl">Create account</CardTitle>
-            <CardDescription>Join Imnoshi and start earning yield.</CardDescription>
+            <CardDescription>
+              Join <LiveBrand className="text-sm align-baseline" /> and start earning yield.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <SignUp

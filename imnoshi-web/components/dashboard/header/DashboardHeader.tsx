@@ -1,11 +1,15 @@
 'use client';
 
 import { Copy, Wallet, Bell, Menu } from 'lucide-react';
+import { BrandLogo } from '@/components/shared/BrandLogo';
+import { LiveBrand } from '@/components/shared/LiveBrand';
 import { useDashboardStore } from '@/stores/useDashboardStore';
+import { useI18n } from '@/hooks/useI18n';
 import { toast } from 'sonner';
 
 export function DashboardHeader({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user, balance } = useDashboardStore();
+  const { t } = useI18n();
 
   const copyUID = () => {
     navigator.clipboard.writeText(user.uid);
@@ -23,12 +27,12 @@ export function DashboardHeader({ onMenuClick }: { onMenuClick?: () => void }) {
           <Menu size={20} />
         </button>
         <div className="hidden sm:flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center font-bold text-primary-foreground">
-            I
-          </div>
+          <BrandLogo size={44} showWordmark={false} />
           <div>
-            <h1 className="text-foreground font-space font-bold text-lg">Imnoshi</h1>
-            <p className="text-foreground/40 text-xs">Dashboard</p>
+            <h1>
+              <LiveBrand compact />
+            </h1>
+            <p className="text-foreground/40 text-xs">{t('dashboard')}</p>
           </div>
         </div>
 
@@ -46,7 +50,7 @@ export function DashboardHeader({ onMenuClick }: { onMenuClick?: () => void }) {
       <div className="flex items-center gap-4">
         <div className="glass px-4 py-2 rounded-lg flex items-center gap-2">
           <Wallet size={16} className="text-primary" />
-          <span className="text-foreground font-mono">${balance.toLocaleString()}</span>
+          <span className="text-foreground font-mono">{balance.toLocaleString()} USDT</span>
         </div>
         <button className="relative p-2 text-foreground/60 hover:text-foreground transition-colors">
           <Bell size={20} />

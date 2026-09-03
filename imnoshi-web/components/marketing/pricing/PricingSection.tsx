@@ -1,11 +1,13 @@
 'use client';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { BuildOptionCard } from './BuildOptionCard';
-import { BUILD_OPTIONS } from '@/lib/constants';
+import { Cpu, LineChart, Monitor, ShieldCheck, Wallet } from 'lucide-react';
+import { LiveBrand } from '@/components/shared/LiveBrand';
+import { GradientButton } from '../shared/GradientButton';
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="relative py-24 bg-gradient-to-b from-background to-background/95">
+    <section id="pricing" className="relative py-24 bg-gradient-to-b from-background to-secondary/25">
       <div className="max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -15,29 +17,77 @@ export function PricingSection() {
           className="text-center mb-16"
         >
           <h2 className="font-space text-3xl md:text-5xl font-bold text-foreground mb-4">
-            Build Options
+            Get One Monitor Node
           </h2>
           <p className="text-foreground/50 max-w-2xl mx-auto">
-            Choose how you want to participate in the engine — full ownership, balanced entry, or zero-hardware rental.
+            One device connects your account UID to a dedicated GPU lane operated by <LiveBrand className="text-base align-baseline" />. You monitor output, uptime, model status and USDT earnings from your dashboard.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {BUILD_OPTIONS.map((option) => (
-            <BuildOptionCard key={option.name} {...option} />
-          ))}
-        </div>
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] items-stretch">
+          <motion.div
+            initial={{ opacity: 0, x: -24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="glass rounded-2xl p-8"
+          >
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-wider text-foreground/40">Monitor node</p>
+                <h3 className="mt-2 font-space text-4xl font-bold text-foreground">£3,000</h3>
+                <p className="mt-3 max-w-xl text-foreground/60">
+                  Hardware at your side, infrastructure on ours. The monitor node is paired with your UID and reports the activity of the GPU, model and exchange lane dedicated to your account.
+                </p>
+              </div>
+              <Link href="/purchase">
+                <GradientButton className="px-7 py-4">Buy One</GradientButton>
+              </Link>
+            </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="mt-12 glass rounded-2xl p-6 text-center text-foreground/50 text-sm"
-        >
-          Electricity: full load 650–700 kWh (~£500–600/mo at £0.25/kWh). Full power deployments may reach ~£1,500/mo.
-          VIP members receive 2 withdrawals per month as staked.
-        </motion.div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {[
+                [Monitor, 'UID-linked device dashboard'],
+                [Cpu, 'Dedicated GPU infrastructure lane'],
+                [LineChart, 'Daily USDT earnings visibility'],
+                [Wallet, 'Crypto and Revolut payout setup'],
+              ].map(([Icon, label]) => (
+                <div key={label as string} className="flex items-center gap-3 rounded-xl border border-border/70 bg-background/50 p-4">
+                  <Icon size={18} className="text-primary" />
+                  <span className="text-sm text-foreground/75">{label as string}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="glass rounded-2xl p-8"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                <ShieldCheck size={20} />
+              </div>
+              <h3 className="font-space text-2xl font-semibold text-foreground">What You See</h3>
+            </div>
+            <div className="mt-6 space-y-4">
+              {[
+                'How many monitor nodes are connected',
+                'GPU mining, LLM work and exchange activity',
+                'Today earnings, total earnings and available USDT',
+                'Withdrawal status, wallet addresses, time and date records',
+              ].map((item) => (
+                <div key={item} className="flex gap-3 text-sm text-foreground/70">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -11,12 +11,58 @@ export async function GET() {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('wallets')
-    .select('symbol, chain, address, created_at')
+    .select('id, symbol, chain, address, created_at')
     .eq('user_id', clerkIdToUuid(userId))
     .order('created_at', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data ?? []);
+}
+
+const patchSchema = z.object({
+  id: z.string().uuid(),
+  symbol: z.string().min(1).max(8),
+  chain: z.string().min(1).max(32),
+  address: z.string().min(1).max(160),
+});
+
+export async function PATCH(req: Request) {
+  const { userId } = auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const parsed = patchSchema.safeParse(await req.json());
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid wallet data' }, { status: 400 });
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('wallets')
+    .update({
+      symbol: parsed.data.symbol,
+      chain: parsed.data.chain,
+      address: parsed.data.address,
+    })
+    .eq('id', parsed.data.id)
+    .eq('user_id', clerkIdToUuid(userId))
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
+
+export async function DELETE(req: Request) {
+  const { userId } = auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { id, address } = await req.json();
+  if (!id && !address) return NextResponse.json({ error: 'Missing wallet id' }, { status: 400 });
+
+  const supabase = createAdminClient();
+  const query = supabase.from('wallets').delete().eq('user_id', clerkIdToUuid(userId));
+  const { error } = id ? await query.eq('id', id) : await query.eq('address', address);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }
 
 const postSchema = z.object({

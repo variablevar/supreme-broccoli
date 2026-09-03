@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createAdminClient } from '@/lib/supabase';
 import { clerkIdToUuid } from '@/lib/userId';
-import { settleRewardPolls } from '@/lib/rewardsEngine';
 
 export async function GET() {
   const { userId } = auth();
@@ -10,13 +9,6 @@ export async function GET() {
 
   const supabase = createAdminClient();
   const dbUserId = clerkIdToUuid(userId);
-
-  // Settle any elapsed 24h reward polls before returning the list.
-  try {
-    await settleRewardPolls(supabase, dbUserId);
-  } catch (err) {
-    console.error('Reward poll settlement failed:', err);
-  }
 
   const { data, error } = await supabase
     .from('rewards')

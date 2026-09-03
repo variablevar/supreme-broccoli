@@ -10,7 +10,7 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
+    --primary: 173 80% 32%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -24,24 +24,24 @@
     --success-foreground: 355.7 100% 97.3%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    --ring: 173 80% 32%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
+    --background: 222 28% 6%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 222 24% 8%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
+    --primary: 174 87% 46%;
+    --primary-foreground: 222 28% 6%;
+    --secondary: 228 18% 15%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    --accent: 263 42% 22%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
@@ -49,7 +49,7 @@
     --success-foreground: 144.9 80.4% 10%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --ring: 174 87% 46%;
   }
 
   * {
@@ -62,12 +62,21 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    text-transform: uppercase;
+  }
+
+  button,
+  input,
+  select,
+  textarea,
+  optgroup {
+    text-transform: uppercase;
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-card/50 backdrop-blur-md border border-border shadow-sm;
+    @apply bg-card/55 backdrop-blur-md border border-border shadow-sm;
   }
 
   .glass-strong {
@@ -80,8 +89,55 @@
     text-wrap: balance;
   }
 
+  .crypto-grid {
+    background-image:
+      linear-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.08) 1px, transparent 1px),
+      linear-gradient(135deg, hsl(var(--accent) / 0.2), transparent 45%);
+    background-size: 42px 42px, 42px 42px, 100% 100%;
+  }
+
+  .data-rail {
+    background: repeating-linear-gradient(
+      90deg,
+      hsl(var(--primary) / 0.15) 0,
+      hsl(var(--primary) / 0.15) 2px,
+      transparent 2px,
+      transparent 18px
+    );
+  }
+
+  .live-brand {
+    display: inline-block;
+    letter-spacing: 0;
+    background-image: linear-gradient(
+      105deg,
+      #8a6516 0%,
+      #c99b2e 18%,
+      #fff2b8 28%,
+      #d8a936 38%,
+      #9a741e 52%,
+      #f6d878 68%,
+      #b88922 84%,
+      #8a6516 100%
+    );
+    background-size: 240% 100%;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 14px rgba(246, 216, 120, 0.28), 0 0 30px rgba(184, 137, 34, 0.18);
+    filter: drop-shadow(0 0 7px rgba(246, 216, 120, 0.36));
+    animation: live-brand-flow 10s ease-in-out infinite, live-brand-glow 5.8s ease-in-out infinite;
+  }
+
+  .brand-logo-image {
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(246, 216, 120, 0.28));
+    animation: brand-logo-breathe 7s ease-in-out infinite;
+  }
+
   .page-enter {
-    animation: page-enter 0.4s ease-out both;
+    animation: page-enter 0.4s ease-out;
   }
 
   @keyframes page-enter {
@@ -91,7 +147,73 @@
     }
     to {
       opacity: 1;
-      transform: scale(1);
+      transform: none;
+    }
+  }
+
+  @keyframes gpu-fan-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes gpu-meter-bar {
+    0%,
+    100% {
+      transform: scaleY(0.4);
+    }
+    50% {
+      transform: scaleY(1.4);
+    }
+  }
+
+  @keyframes trading-candle-in {
+    from {
+      opacity: 0;
+      transform: scaleY(0.4);
+      transform-origin: bottom;
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1);
+      transform-origin: bottom;
+    }
+  }
+
+  @keyframes live-brand-flow {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes live-brand-glow {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 7px rgba(246, 216, 120, 0.34));
+    }
+    50% {
+      filter: drop-shadow(0 0 13px rgba(255, 233, 166, 0.52));
+    }
+  }
+
+  @keyframes brand-logo-breathe {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 8px rgba(246, 216, 120, 0.24));
+      transform: translateZ(0) scale(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 17px rgba(255, 226, 132, 0.46));
+      transform: translateZ(0) scale(1.015);
     }
   }
 }

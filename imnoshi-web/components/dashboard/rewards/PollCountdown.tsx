@@ -17,27 +17,19 @@ function getTimeRemaining(targetMs: number) {
 }
 
 export function PollCountdown() {
-  const { rewards, stakes, loading } = useAccountData();
-  const activeStakes = stakes.filter((s) => s.status === 'active');
+  const { rewards, loading } = useAccountData();
 
-  // Next poll = 24h after the last credited poll reward, or 24h after the
-  // earliest active stake if none has been credited yet.
   const lastCredit = rewards
-    .filter((r) => r.source === 'staking_bonus')
     .map((r) => new Date(r.created_at).getTime())
     .sort((a, b) => b - a)[0];
-  const earliestStake = activeStakes.length
-    ? Math.min(...activeStakes.map((s) => new Date(s.started_at).getTime()))
-    : null;
-  const base = lastCredit ?? earliestStake;
-  const nextPollMs = base != null ? base + POLL_MS : null;
+  const base = lastCredit ?? Date.now();
+  const nextPollMs = base + POLL_MS;
 
   const [time, setTime] = useState(() =>
     nextPollMs != null ? getTimeRemaining(nextPollMs) : null
   );
 
   useEffect(() => {
-    if (nextPollMs == null) return;
     setTime(getTimeRemaining(nextPollMs));
     const interval = setInterval(() => setTime(getTimeRemaining(nextPollMs)), 1000);
     return () => clearInterval(interval);
@@ -49,20 +41,15 @@ export function PollCountdown() {
         <div className="p-2 rounded-lg bg-primary/10 text-primary">
           <Timer size={20} />
         </div>
-        <h3 className="font-space font-semibold text-foreground">Algorithm Poll</h3>
+        <h3 className="font-space font-semibold text-foreground">Next Earnings Cycle</h3>
       </div>
 
       <p className="text-foreground/60 text-sm mb-6">
-        24-hour poll mining. The system finds the best output as a reward poll and stays active
-        until timeout.
+        Your mining, LLM and exchange activity is summarised into USDT earning cycles.
       </p>
 
       {loading ? (
         <p className="text-muted-foreground text-sm">Loading…</p>
-      ) : nextPollMs == null ? (
-        <p className="text-muted-foreground text-sm">
-          No active stake — the reward poll starts once you stake.
-        </p>
       ) : time && (
         <div className="grid grid-cols-3 gap-4">
           {[

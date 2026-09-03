@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { SignIn } from '@clerk/nextjs';
+import { BrandLogo } from '@/components/shared/BrandLogo';
+import { LiveBrand } from '@/components/shared/LiveBrand';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function LoginView() {
@@ -9,11 +11,11 @@ export function LoginView() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-primary flex items-center justify-center font-bold text-primary-foreground text-lg">
-              I
-            </div>
+            <BrandLogo size={96} showWordmark={false} priority className="mx-auto mb-4 justify-center" />
             <CardTitle className="font-space text-2xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to access your Imnoshi dashboard.</CardDescription>
+            <CardDescription>
+              Sign in to access your <LiveBrand className="text-sm align-baseline" /> dashboard.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <SignIn
