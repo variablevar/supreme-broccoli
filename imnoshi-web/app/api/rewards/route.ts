@@ -1,19 +1,16 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { createAdminClient } from '@/lib/supabase';
-import { clerkIdToUuid } from '@/lib/userId';
+import { requireCustomer } from '@/lib/customerAuth';
 
 export async function GET() {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   const supabase = createAdminClient();
-  const dbUserId = clerkIdToUuid(userId);
-
   const { data, error } = await supabase
     .from('rewards')
     .select('*')
-    .eq('user_id', dbUserId)
+    .eq('user_id', guard.session.userId)
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -23,14 +20,14 @@ export async function GET() {
 
 // POST = claim all pending rewards for the authenticated user.
 export async function POST() {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('rewards')
     .update({ status: 'claimed', claimed_at: new Date().toISOString() })
-    .eq('user_id', clerkIdToUuid(userId))
+    .eq('user_id', guard.session.userId)
     .eq('status', 'pending')
     .select();
 

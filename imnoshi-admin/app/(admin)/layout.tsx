@@ -1,9 +1,17 @@
-import { isAdmin } from '@/lib/adminAuth';
+import { redirect } from 'next/navigation';
+import { getSession, isAdmin } from '@/lib/adminAuth';
 import { AdminShell } from '@/components/AdminShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldAlert } from 'lucide-react';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Belt and braces: middleware already redirects incomplete sessions,
+  // but we re-check here so a stale cookie can't bypass the gate.
+  const session = await getSession();
+  if (!session) redirect('/login');
+  if (session.stage === 'reset') redirect('/login/setup');
+  if (session.stage === 'totp') redirect('/login/verify');
+
   if (!(await isAdmin())) {
     return (
       <main className="min-h-screen grid place-items-center px-4">
@@ -25,5 +33,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     );
   }
 
-  return <AdminShell>{children}</AdminShell>;
+  return <AdminShell email={session.email}>{children}</AdminShell>;
 }

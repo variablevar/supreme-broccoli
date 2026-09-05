@@ -1,23 +1,31 @@
-import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { LoginView } from '@/components/auth/LoginView';
-import { hasRealClerkKeys } from '@/lib/authConfig';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { BrandLogo } from '@/components/shared/BrandLogo';
+import { LiveBrand } from '@/components/shared/LiveBrand';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getSession } from '@/lib/customerAuth';
 
-export default function LoginPage() {
-  if (!hasRealClerkKeys()) {
-    return (
-      <main className="min-h-screen grid place-items-center bg-background px-4 py-12">
-        <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 text-center shadow-sm">
-          <h1 className="font-space text-2xl font-semibold">Clerk keys needed</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Add real Clerk values to .env.local, then restart the dev server to use login.
-          </p>
-        </div>
-      </main>
-    );
-  }
+export default async function LoginPage() {
+  const session = await getSession();
+  if (session?.stage === 'done') redirect('/dashboard');
+  if (session?.stage === 'totp') redirect('/login/verify');
 
-  // Signed-in users go straight to the dashboard — no login flash.
-  if (auth().userId) redirect('/dashboard');
-  return <LoginView />;
+  return (
+    <main className="min-h-screen w-full grid place-items-center bg-background px-4 py-12">
+      <div className="w-full max-w-md">
+        <Card>
+          <CardHeader className="text-center">
+            <BrandLogo size={96} showWordmark={false} priority className="mx-auto mb-4 justify-center" />
+            <CardTitle className="font-space text-2xl">Welcome back</CardTitle>
+            <CardDescription>
+              Sign in to access your <LiveBrand className="text-sm align-baseline" /> dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LoginForm />
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  );
 }

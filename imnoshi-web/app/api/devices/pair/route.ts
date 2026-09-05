@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { auth } from '@clerk/nextjs/server';
 import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase';
 import { ensureDbUser } from '@/lib/userId';
+import { requireCustomer } from '@/lib/customerAuth';
 
 const schema = z.object({
   code: z.string().length(6).regex(/^[A-Z2-9]{6}$/),
@@ -22,14 +22,14 @@ function hashToken(token: string): string {
  * complete pairing via scan.
  */
 export async function POST(req: Request) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Invalid code' }, { status: 400 });
 
   const supabase = createAdminClient();
-  const dbUser = await ensureDbUser(supabase, userId);
+  const dbUser = await ensureDbUser(supabase, guard.session.email);
 
   const { data: pairing, error } = await supabase
     .from('device_pairings')
@@ -66,7 +66,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     deviceId: pairing.device_id,
-    // This token is shown ONCE -- the device scans a QR encoding it.
     claimToken: newClaimToken,
   });
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { createAdminClient } from '@/lib/supabase';
-import { ensureDbUser, clerkIdToUuid } from '@/lib/userId';
+import { ensureDbUser } from '@/lib/userId';
+import { requireCustomer } from '@/lib/customerAuth';
 import { z } from 'zod';
 
 const destinationSchema = z.object({
@@ -30,14 +30,14 @@ function serialize(row: Record<string, any>) {
 }
 
 export async function GET() {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('payout_destinations')
     .select('*')
-    .eq('user_id', clerkIdToUuid(userId))
+    .eq('user_id', guard.session.userId)
     .order('updated_at', { ascending: false });
 
   if (error) return NextResponse.json([], { status: 200 });
@@ -45,14 +45,14 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   const parsed = destinationSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: 'Invalid payout destination' }, { status: 400 });
 
   const supabase = createAdminClient();
-  const dbUser = await ensureDbUser(supabase, userId);
+  const dbUser = await ensureDbUser(supabase, guard.session.email);
   const row = {
     user_id: dbUser.id,
     type: parsed.data.type,
@@ -75,8 +75,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: 'Missing destination id' }, { status: 400 });
@@ -86,7 +86,7 @@ export async function DELETE(req: Request) {
     .from('payout_destinations')
     .delete()
     .eq('id', id)
-    .eq('user_id', clerkIdToUuid(userId));
+    .eq('user_id', guard.session.userId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

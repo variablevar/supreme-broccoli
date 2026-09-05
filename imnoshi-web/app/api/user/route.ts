@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
 import { createAdminClient } from '@/lib/supabase';
 import { ensureDbUser } from '@/lib/userId';
+import { requireCustomer } from '@/lib/customerAuth';
 import { z } from 'zod';
 import type { LanguageCode, ThemePreference } from '@/types';
 
@@ -24,21 +24,16 @@ const languageSchema = z.enum([
 const themeSchema = z.enum(['dark', 'light', 'system']);
 
 export async function GET() {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
-  const user = await currentUser();
-  const email = user?.primaryEmailAddress?.emailAddress ?? '';
   const supabase = createAdminClient();
-
   try {
-    // Creates the users row (with UID) on first call, returns it afterwards.
-    const dbUser = await ensureDbUser(supabase, userId, email);
-
+    const dbUser = await ensureDbUser(supabase, guard.session.email);
     return NextResponse.json({
-      id: userId,
+      id: guard.session.userId,
       uid: dbUser.uid,
-      email: email || dbUser.email,
+      email: dbUser.email,
       walletAddress: dbUser.wallet_address ?? '',
       vipStatus: dbUser.vip_status ?? false,
       language: (dbUser.language_preference ?? 'en-GB') as LanguageCode,
@@ -62,8 +57,8 @@ const postSchema = z.object({
 
 // POST = update user profile preferences and linked payout wallet.
 export async function POST(req: Request) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   try {
     const body = await req.json();
@@ -73,7 +68,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createAdminClient();
-    const dbUser = await ensureDbUser(supabase, userId);
+    const dbUser = await ensureDbUser(supabase, guard.session.email);
     const updates: Record<string, string> = {
       updated_at: new Date().toISOString(),
     };
@@ -89,7 +84,7 @@ export async function POST(req: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

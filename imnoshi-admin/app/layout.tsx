@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
-import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'sonner';
-import { hasRealClerkKeys } from '@/lib/authConfig';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -14,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const content = (
+  return (
     <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="min-h-screen bg-background text-foreground antialiased">
         {children}
@@ -30,13 +28,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </body>
     </html>
-  );
-
-  if (!hasRealClerkKeys()) return content;
-
-  return (
-    <ClerkProvider>
-      {content}
-    </ClerkProvider>
   );
 }

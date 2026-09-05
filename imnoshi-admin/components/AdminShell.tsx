@@ -1,9 +1,23 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BrandLogo } from '@/components/BrandLogo';
-import { LayoutDashboard, Users, ArrowDownLeft, Gift, Activity, Cpu, ScrollText, Wallet } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Users,
+  ArrowDownLeft,
+  Gift,
+  Activity,
+  Cpu,
+  ScrollText,
+  Wallet,
+  Settings,
+  LogOut,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const NAV = [
   { label: 'Overview',     href: '/',             icon: LayoutDashboard },
@@ -14,10 +28,31 @@ const NAV = [
   { label: 'Fleet Stats',  href: '/fleet',        icon: Activity },
   { label: 'Balance',      href: '/balance',      icon: Wallet },
   { label: 'Audit Log',    href: '/audit',        icon: ScrollText },
+  { label: 'Settings',     href: '/settings',     icon: Settings },
 ];
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+export function AdminShell({
+  children,
+  email,
+}: {
+  children: React.ReactNode;
+  email: string;
+}) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function signOut() {
+    setSigningOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.replace('/login');
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Sign-out failed');
+      setSigningOut(false);
+    }
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -50,6 +85,21 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        <div className="p-3 border-t border-border space-y-2">
+          <p className="px-3 text-xs text-muted-foreground truncate" title={email}>
+            {email}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 text-muted-foreground"
+            onClick={signOut}
+            disabled={signingOut}
+          >
+            <LogOut size={14} />
+            {signingOut ? 'Signing out…' : 'Sign out'}
+          </Button>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -67,6 +117,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               {item.label}
             </Link>
           ))}
+        </div>
+        <div className="md:hidden flex items-center justify-between px-3 py-2 border-b border-border">
+          <p className="text-xs text-muted-foreground truncate">{email}</p>
+          <Button variant="ghost" size="sm" onClick={signOut} disabled={signingOut} className="gap-1">
+            <LogOut size={14} />
+            Sign out
+          </Button>
         </div>
         <main className="flex-1 p-4 md:p-6 overflow-x-hidden">{children}</main>
       </div>

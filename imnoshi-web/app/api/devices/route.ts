@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import crypto from 'crypto';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase';
-import { clerkIdToUuid } from '@/lib/userId';
+import { requireCustomer } from '@/lib/customerAuth';
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 export async function GET() {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -19,7 +18,7 @@ export async function GET() {
     .select(
       'id, uid, name, status, gpu_model, model_name, uptime_percent, hash_rate, ai_load, trading_load, today_usdt, total_usdt, last_seen'
     )
-    .eq('user_id', clerkIdToUuid(userId))
+    .eq('user_id', guard.session.userId)
     .order('created_at', { ascending: true });
 
   if (error) return NextResponse.json([], { status: 200 });

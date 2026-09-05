@@ -47,8 +47,9 @@ const schema = z.object({
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   const denied = await requireAdmin();
   if (denied) return denied;
   const ctx = await getAdminContext();
@@ -63,7 +64,7 @@ export async function POST(
   const { data: pairing, error: pairErr } = await supabase
     .from('device_pairings')
     .select('claim_token')
-    .eq('device_id', params.id)
+    .eq('device_id', id)
     .order('claimed_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -81,7 +82,7 @@ export async function POST(
      'set_currency_shuffle', 'set_paired_page_text'].includes(parsed.data.command)
   ) {
     const patch: Record<string, unknown> = {
-      device_id: params.id,
+      device_id: id,
       updated_by_email: ctx?.email,
       updated_at: new Date().toISOString(),
     };
@@ -108,7 +109,7 @@ export async function POST(
   const { data, error } = await supabase
     .from('device_commands')
     .insert({
-      device_id: params.id,
+      device_id: id,
       command: parsed.data.command,
       payload: {
         config: parsed.data.config ?? null,
@@ -128,7 +129,7 @@ export async function POST(
   await audit(ctx, `device.${parsed.data.command}`, {
     targetTable: 'device_commands',
     targetId: data.id,
-    details: { device_id: params.id, payload: data.payload },
+    details: { device_id: id, payload: data.payload },
     ip: req.headers.get('x-forwarded-for'),
     userAgent: req.headers.get('user-agent'),
   });

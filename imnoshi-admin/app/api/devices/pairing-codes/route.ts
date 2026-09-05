@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
 
   const supabase = createAdminClient();
 
-  // Look up the customer's Clerk user ID by email. If the customer
-  // hasn't signed in yet, this returns 404.
+  // Look up the customer's app user ID by email. If the customer
+  // hasn't registered yet, this returns 404.
   const { data: user, error: userErr } = await supabase
     .from('users')
     .select('id, uid, email')

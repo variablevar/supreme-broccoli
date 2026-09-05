@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { createAdminClient } from '@/lib/supabase';
-import { ensureDbUser, clerkIdToUuid } from '@/lib/userId';
+import { ensureDbUser } from '@/lib/userId';
+import { requireCustomer } from '@/lib/customerAuth';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -11,8 +11,8 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   try {
     const body = await req.json();
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createAdminClient();
-    const dbUser = await ensureDbUser(supabase, userId);
+    const dbUser = await ensureDbUser(supabase, guard.session.email);
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const { count } = await supabase
@@ -40,7 +40,6 @@ export async function POST(req: Request) {
     }
 
     // --- Server-side balance check ---
-    // available = claimed customer earnings - non-rejected withdrawals
     const [rewardsRes, withdrawalsRes] = await Promise.all([
       supabase.from('rewards').select('amount, status').eq('user_id', dbUser.id),
       supabase.from('withdrawals').select('amount, status').eq('user_id', dbUser.id),
@@ -87,20 +86,20 @@ export async function POST(req: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }
 
 export async function GET() {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('withdrawals')
     .select('*')
-    .eq('user_id', clerkIdToUuid(userId))
+    .eq('user_id', guard.session.userId)
     .order('created_at', { ascending: false })
     .limit(50);
 

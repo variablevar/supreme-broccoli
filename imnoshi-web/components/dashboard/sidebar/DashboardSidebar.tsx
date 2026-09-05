@@ -16,6 +16,7 @@ import {
   Settings,
   Mail,
   Link2,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ElementType> = {
@@ -28,9 +29,14 @@ const iconMap: Record<string, React.ElementType> = {
   Settings,
   Mail,
   Link2,
+  // 'Link' is the name used by the constants table for "Pair Device".
+  // lucide-react exports both `Link` (the http-link icon) and the
+  // generic link icon we used here. Alias `Link2` so the lookup works
+  // whether the data says 'Link' or 'Link2'.
+  Link: LinkIcon,
 };
 
-const labelKey: Record<string, 'overview' | 'devices' | 'wallets' | 'earnings' | 'withdrawals' | 'transactions' | 'settings' | 'contact'> = {
+const labelKey: Record<string, string> = {
   Overview: 'overview',
   Devices: 'devices',
   Wallets: 'wallets',
@@ -40,6 +46,14 @@ const labelKey: Record<string, 'overview' | 'devices' | 'wallets' | 'earnings' |
   Settings: 'settings',
   Contact: 'contact',
 };
+
+// t is typed with a narrower key set than Record<string, string>;
+// a per-key cast widens it just enough to accept our dynamic keys
+// without losing the per-key exhaustive checks elsewhere.
+function safeTranslate(t: (k: any) => string, k: string): string {
+  const v = t(k);
+  return v === k ? k.replace(/^./, (c) => c.toUpperCase()) : v;
+}
 
 // 'Pair Device' is a one-off admin-induced step; we don't translate
 // the label.
@@ -58,9 +72,9 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 px-4 space-y-2">
         {DASHBOARD_NAV.map((item) => {
-          const Icon = iconMap[item.icon];
+          const Icon = iconMap[item.icon] ?? Link2;
           const active = pathname === item.href;
-          const label = item.label === PAIR_LABEL ? PAIR_LABEL : t(labelKey[item.label]);
+          const label = item.label === PAIR_LABEL ? PAIR_LABEL : safeTranslate(t, labelKey[item.label]);
           return (
             <NextLink
               key={item.href}
