@@ -3,14 +3,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { BrandLogo } from '@/components/BrandLogo';
-import { LayoutDashboard, Users, ArrowDownLeft, Gift, Activity } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowDownLeft, Gift, Activity, Cpu, ScrollText, Wallet } from 'lucide-react';
 
 const NAV = [
-  { label: 'Overview', href: '/', icon: LayoutDashboard },
-  { label: 'Users', href: '/users', icon: Users },
-  { label: 'Withdrawals', href: '/withdrawals', icon: ArrowDownLeft },
-  { label: 'Rewards', href: '/rewards', icon: Gift },
-  { label: 'Fleet Stats', href: '/fleet', icon: Activity },
+  { label: 'Overview',     href: '/',             icon: LayoutDashboard },
+  { label: 'Users',        href: '/users',        icon: Users },
+  { label: 'Devices',      href: '/devices',      icon: Cpu },
+  { label: 'Withdrawals',  href: '/withdrawals',  icon: ArrowDownLeft },
+  { label: 'Rewards',      href: '/rewards',      icon: Gift },
+  { label: 'Fleet Stats',  href: '/fleet',        icon: Activity },
+  { label: 'Balance',      href: '/balance',      icon: Wallet },
+  { label: 'Audit Log',    href: '/audit',        icon: ScrollText },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -70,3 +73,4 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+

@@ -2,18 +2,22 @@ import { Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { compactNumber, dateTime, getAdminOverview, money } from '@/lib/adminData';
+import { isFullAdmin } from '@/lib/adminAuth';
+import { FleetSnapshotForm } from '@/components/dashboard/FleetSnapshotForm';
 
 export const dynamic = 'force-dynamic';
 
 export default async function FleetPage() {
-  const { fleetStats } = await getAdminOverview();
+  const [{ fleetStats }, canWrite] = await Promise.all([getAdminOverview(), isFullAdmin()]);
   const latest = fleetStats[0];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-space text-3xl font-semibold">Fleet Stats</h1>
-        <p className="mt-1 text-sm text-muted-foreground">GPU fleet snapshots powering the marketing ticker.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          GPU fleet snapshots powering the marketing ticker.
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -51,6 +55,8 @@ export default async function FleetPage() {
           </CardContent>
         </Card>
       </div>
+
+      {canWrite ? <FleetSnapshotForm /> : null}
 
       <Card>
         <CardHeader>

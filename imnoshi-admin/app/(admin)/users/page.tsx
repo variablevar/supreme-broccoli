@@ -2,11 +2,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { dateTime, getAdminOverview } from '@/lib/adminData';
+import { isFullAdmin } from '@/lib/adminAuth';
+import { VipToggle } from '@/components/dashboard/VipToggle';
 
 export const dynamic = 'force-dynamic';
 
 export default async function UsersPage() {
   const { users } = await getAdminOverview();
+  const canWrite = await isFullAdmin();
 
   return (
     <div className="space-y-6">
@@ -28,6 +31,7 @@ export default async function UsersPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Wallet</TableHead>
                 <TableHead>Created</TableHead>
+                {canWrite ? <TableHead className="text-right">Actions</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -44,11 +48,16 @@ export default async function UsersPage() {
                     {user.wallet_address ?? 'Not connected'}
                   </TableCell>
                   <TableCell>{dateTime(user.created_at)}</TableCell>
+                  {canWrite ? (
+                    <TableCell className="text-right">
+                      <VipToggle userId={user.id} initial={!!user.vip_status} email={user.email} />
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               ))}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={canWrite ? 6 : 5} className="text-center text-muted-foreground">
                     No users yet.
                   </TableCell>
                 </TableRow>

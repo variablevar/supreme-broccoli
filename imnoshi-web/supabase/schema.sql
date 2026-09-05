@@ -175,3 +175,24 @@ create policy "Users can read own payout destinations" on public.payout_destinat
 -- `references auth.users` foreign key on public.users:
 --
 --   alter table public.users drop constraint users_id_fkey;
+
+-- Migration for projects that ran the original schema with the
+-- `references auth.users` foreign key on public.users:
+--
+--   alter table public.users drop constraint users_id_fkey;
+--
+-- Operational tables (audit log, balance ledger, payout dispatches,
+-- device pairing, withdrawal approval trail) live in their own
+-- migration files in this folder:
+--
+--   20260907093000_operational_hardening.sql
+--   20260907093001_operational_hardening_part2.sql
+--
+-- Apply the original language/theme migration and both operational
+-- migrations before running seed.sql.
+
+-- Indexes used by the admin queues.
+create index if not exists withdrawals_reviewed_at_idx
+  on public.withdrawals(reviewed_at desc) where reviewed_at is not null;
+create index if not exists withdrawals_status_idx
+  on public.withdrawals(status);

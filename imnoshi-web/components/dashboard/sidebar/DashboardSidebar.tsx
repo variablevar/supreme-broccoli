@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { DASHBOARD_NAV } from '@/lib/constants';
@@ -15,6 +15,7 @@ import {
   Receipt,
   Settings,
   Mail,
+  Link2,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ElementType> = {
@@ -26,6 +27,7 @@ const iconMap: Record<string, React.ElementType> = {
   Receipt,
   Settings,
   Mail,
+  Link2,
 };
 
 const labelKey: Record<string, 'overview' | 'devices' | 'wallets' | 'earnings' | 'withdrawals' | 'transactions' | 'settings' | 'contact'> = {
@@ -38,6 +40,10 @@ const labelKey: Record<string, 'overview' | 'devices' | 'wallets' | 'earnings' |
   Settings: 'settings',
   Contact: 'contact',
 };
+
+// 'Pair Device' is a one-off admin-induced step; we don't translate
+// the label.
+const PAIR_LABEL = 'Pair Device';
 
 export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -54,8 +60,9 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
         {DASHBOARD_NAV.map((item) => {
           const Icon = iconMap[item.icon];
           const active = pathname === item.href;
+          const label = item.label === PAIR_LABEL ? PAIR_LABEL : t(labelKey[item.label]);
           return (
-            <Link
+            <NextLink
               key={item.href}
               href={item.href}
               onClick={onNavigate}
@@ -67,8 +74,8 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
               )}
             >
               <Icon size={18} />
-                {t(labelKey[item.label])}
-              </Link>
+              {label}
+            </NextLink>
           );
         })}
       </nav>

@@ -10,6 +10,7 @@ export const NAV_LINKS = [
 export const DASHBOARD_NAV = [
   { label: 'Overview', href: '/dashboard', icon: 'LayoutDashboard' },
   { label: 'Devices', href: '/devices', icon: 'Cpu' },
+  { label: 'Pair Device', href: '/devices/pair', icon: 'Link' },
   { label: 'Wallets', href: '/wallet', icon: 'Wallet' },
   { label: 'Earnings', href: '/rewards', icon: 'Gift' },
   { label: 'Withdrawals', href: '/withdrawals', icon: 'ArrowDownLeft' },
