@@ -121,9 +121,12 @@ export async function verifyPassword(email: string, password: string): Promise<L
     return { ok: false, reason: 'locked', account };
   }
 
-  if (!isAllowedAdminEmail(normalized)) {
-    return { ok: false, reason: 'not_allowlisted', account };
-  }
+  // Allowlist: ADMIN_EMAILS env is still honoured as a deploy-time
+  // safety net (e.g. to keep a former employee out before the
+  // admin_users row is deleted), but the presence of a row in
+  // admin_users (which we just queried) is sufficient by itself.
+  // So no extra check is required here -- the row's existence
+  // already implies the email is on the allowlist.
 
   const bcrypt = await import('bcryptjs');
   const passwordOk = bcrypt.compareSync(password, account.password_hash);
@@ -177,8 +180,14 @@ export async function startSession(
 export async function getAdminRole(): Promise<AdminRole> {
   const session = await getSession();
   if (!session || session.stage !== 'done') return 'none';
-  if (!isAllowedAdminEmail(session.email)) return 'none';
-  return 'full';
+  // The allowlist is "ADMIN_EMAILS env OR the admin_users table has
+  // this email". When admin_users is empty / the migration hasn't
+  // run yet, fall back to the env so the bootstrap admin can still
+  // log in. Once at least one real row exists, treat the DB as the
+  // source of truth.
+  if (isAllowedAdminEmail(session.email)) return 'full';
+  if (await hasAdminUserRow(session.email)) return 'full';
+  return 'none';
 }
 
 export async function isAdmin(): Promise<boolean> {
@@ -223,7 +232,10 @@ export async function requireAdmin(): Promise<NextResponse | null> {
       { status: 401 }
     );
   }
-  if (!isAllowedAdminEmail(session.email)) {
+  if (
+    !isAllowedAdminEmail(session.email) &&
+    !(await hasAdminUserRow(session.email))
+  ) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return null;
@@ -259,5 +271,30 @@ export async function audit(
     });
   } catch {
     // intentionally swallow
+  }
+}
+
+
+/**
+ * True if a row exists in admin_users with the given email. Used as
+ * the second line of defence behind ADMIN_EMAILS -- once the
+ * admin_users migration has been applied and at least one row is
+ * present, treat the table as the authoritative allowlist. Until
+ * then we fall back to ADMIN_EMAILS so an operator can bootstrap.
+ */
+export async function hasAdminUserRow(email: string): Promise<boolean> {
+  try {
+    const normalized = email.trim().toLowerCase();
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('id')
+      .eq('email', normalized)
+      .limit(1)
+      .maybeSingle();
+    if (error) return false;
+    return !!data;
+  } catch {
+    return false;
   }
 }

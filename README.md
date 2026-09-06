@@ -20,17 +20,28 @@ Imnoshi is a multi-project quant platform comprising a customer dashboard, an ad
 ## First-Time Setup
 
 ```bash
-# 1. Customer app
+# Once, install pnpm: npm i -g pnpm@9
+
+# 1. Install everything (single workspace install, ~25 s)
+cd imnoshi
+pnpm install
+
+# 2. Customer app
 cd imnoshi-web
 cp .env.example .env.local             # fill in Supabase + CUSTOMER_TOTP_ENC_KEY
-npm install
-npm run dev                            # http://localhost:3000
+pnpm dev                               # http://localhost:3000
 
-# 2. Admin app (separate terminal)
+# 3. Admin app (separate terminal)
 cd imnoshi-admin
 cp .env.example .env.local             # add ADMIN_EMAILS / SUPABASE_* / ADMIN_TOTP_ENC_KEY
-npm install
-npm run dev                            # http://localhost:3001
+pnpm dev                               # http://localhost:3001
+```
+
+Or from the repo root, you can boot each app with the workspace filter:
+
+```bash
+pnpm dev:web       # in one terminal
+pnpm dev:admin     # in another terminal
 ```
 
 Both apps use built-in email + password + Google Authenticator auth — no Clerk required.

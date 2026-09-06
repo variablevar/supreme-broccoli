@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { CreateWallet } from '@/components/dashboard/wallet/CreateWallet';
+import { ConnectWallet } from '@/components/dashboard/wallet/ConnectWallet';
 import { Copy, Eye, EyeOff, Pencil, Trash2, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,6 +28,23 @@ export default function WalletPage() {
   const [revealedSeeds, setRevealedSeeds] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [draftAddress, setDraftAddress] = useState('');
+  const [liveBalance, setLiveBalance] = useState<{
+    address: string | null; nativeEth: string | null; usdt: string | null; error?: string;
+  }>({ address: null, nativeEth: null, usdt: null });
+  useEffect(() => {
+    let cancelled = false;
+    const fetchBalance = async () => {
+      try {
+        const res = await fetch("/api/wallets/balance", { cache: "no-store" });
+        if (!res.ok) return;
+        const j = await res.json();
+        if (!cancelled) setLiveBalance(j);
+      } catch {}
+    };
+    fetchBalance();
+    const id = setInterval(fetchBalance, 30 * 1000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
   // Fetch live on-chain balances for each wallet address.
   useEffect(() => {
@@ -105,6 +123,25 @@ export default function WalletPage() {
 
   return (
     <div className="space-y-8">
+      <ConnectWallet initialAddress={liveBalance.address} initialChain="Ethereum" />
+      <GlassCard hover={false}>
+        <h3 className="font-space font-semibold text-foreground text-xl mb-3">Live balance (Ethereum mainnet)</h3>
+        {!liveBalance.address ? (
+          <p className="text-sm text-muted-foreground">Connect a wallet above to see your live USDT and ETH balance, updated every 30 s.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">USDT</p>
+              <p className="font-space text-3xl font-bold text-foreground mt-1">{liveBalance.usdt ?? "—"} <span className="text-base font-normal text-muted-foreground">USDT</span></p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">ETH</p>
+              <p className="font-space text-3xl font-bold text-foreground mt-1">{liveBalance.nativeEth ?? "—"} <span className="text-base font-normal text-muted-foreground">ETH</span></p>
+            </div>
+            <div className="md:col-span-2 text-xs text-muted-foreground font-mono break-all">{liveBalance.address}{liveBalance.error ? <span className="text-destructive"> — {liveBalance.error}</span> : null}</div>
+          </div>
+        )}
+      </GlassCard>
       <div>
         <h1 className="font-space text-3xl font-bold text-foreground mb-2">Wallet</h1>
         <p className="text-muted-foreground">View, copy, edit and delete wallet addresses connected to your UID.</p>

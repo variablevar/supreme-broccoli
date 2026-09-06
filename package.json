@@ -1,8 +1,12 @@
 {
   "name": "imnoshi-monorepo",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
-    "build": "npm install --prefix imnoshi-web && npm run build --prefix imnoshi-web",
-    "start": "npm run start --prefix imnoshi-web"
+    "dev:web": "pnpm --filter imnoshi-web dev",
+    "dev:admin": "pnpm --filter imnoshi-admin dev",
+    "build": "pnpm --filter imnoshi-web build",
+    "start": "pnpm --filter imnoshi-web start",
+    "typecheck": "pnpm --filter imnoshi-web --filter imnoshi-admin typecheck"
   }
 }

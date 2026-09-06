@@ -1,0 +1,9 @@
+packages:
+  - imnoshi-web
+  - imnoshi-admin
+onlyBuiltDependencies:
+  - "@next/swc-linux-x64-gnu"
+  - "@next/swc-linux-x64-musl"
+  - esbuild
+  - sharp
+  - "@tailwindcss/oxide"
