@@ -31,7 +31,7 @@ export function BalanceAdjustmentForm({ users }: { users: UserOption[] }) {
     if (!userId || !amount) return;
     setBusy(true);
     try {
-      const res = await fetch('/admin/api/balance/adjust', {
+      const res = await fetch('/api/balance/adjust', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

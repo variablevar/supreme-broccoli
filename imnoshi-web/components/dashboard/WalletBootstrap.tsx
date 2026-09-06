@@ -17,13 +17,14 @@ export function WalletBootstrap() {
     // Pull the real account state from the database.
     (async () => {
       try {
-        const [userRes, rewardsRes, withdrawalsRes, walletsRes, devicesRes, destinationsRes] = await Promise.all([
+        const [userRes, rewardsRes, withdrawalsRes, walletsRes, devicesRes, destinationsRes, balanceRes] = await Promise.all([
           fetch('/api/user'),
           fetch('/api/rewards'),
           fetch('/api/withdrawals'),
           fetch('/api/wallets'),
           fetch('/api/devices'),
           fetch('/api/payout-destinations'),
+          fetch('/api/account/balance'),
         ]);
         if (!userRes.ok) return;
 
@@ -34,6 +35,7 @@ export function WalletBootstrap() {
           walletsRes.ok ? await walletsRes.json() : [];
         const devices: MonitorDevice[] = devicesRes.ok ? await devicesRes.json() : [];
         const destinations: PayoutDestination[] = destinationsRes.ok ? await destinationsRes.json() : [];
+        const ledgerBalance = balanceRes.ok ? ((await balanceRes.json()).balance as number) ?? 0 : 0;
 
         // Hydrate the wallet list from the database (single source of truth).
         setWallets(
@@ -75,7 +77,7 @@ export function WalletBootstrap() {
         const deviceTotalEarnings = devices.reduce((s, device) => s + Number(device.totalUsdt), 0);
         const todayEarnings = rewardTodayEarnings || deviceTodayEarnings;
         const totalEarnings = rewardTotalEarnings || deviceTotalEarnings;
-        const balance = Math.max(0, claimed - withdrawn);
+        const balance = balanceRes.ok ? Math.max(0, ledgerBalance) : Math.max(0, claimed - withdrawn);
         const lastWithdrawal = withdrawals
           .filter((w) => w.status !== 'rejected')
           .map((w) => new Date(w.created_at).getTime())

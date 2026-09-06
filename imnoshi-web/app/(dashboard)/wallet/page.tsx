@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { GlassCard } from '@/components/shared/GlassCard';
 import { useDashboardStore } from '@/stores/useDashboardStore';
-import { getChainBalance } from '@/lib/web3';
+import { getChainBalance } from '@/lib/chain-balance';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -22,7 +22,7 @@ const PRICE_IDS: Record<string, string> = {
 };
 
 export default function WalletPage() {
-  const { user, wallets } = useDashboardStore();
+  const { user, wallets, balance } = useDashboardStore();
   const [balances, setBalances] = useState<Record<string, number | null>>({});
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [revealedSeeds, setRevealedSeeds] = useState<Record<string, boolean>>({});
@@ -141,6 +141,17 @@ export default function WalletPage() {
             <div className="md:col-span-2 text-xs text-muted-foreground font-mono break-all">{liveBalance.address}{liveBalance.error ? <span className="text-destructive"> — {liveBalance.error}</span> : null}</div>
           </div>
         )}
+      </GlassCard>
+
+      <GlassCard hover={false}>
+        <h3 className="font-space font-semibold text-foreground text-xl mb-3">Platform balance</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Includes mining rewards, claim rewards, and admin adjustments.
+          Independent of the on-chain wallet balance above; the platform owes you this amount and you can request a withdrawal from /withdrawals.
+        </p>
+        <p className="font-space text-4xl font-bold text-foreground">
+          {balance.toLocaleString()} <span className="text-base font-normal text-muted-foreground">USDT</span>
+        </p>
       </GlassCard>
       <div>
         <h1 className="font-space text-3xl font-bold text-foreground mb-2">Wallet</h1>

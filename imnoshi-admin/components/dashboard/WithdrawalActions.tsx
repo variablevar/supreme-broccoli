@@ -38,7 +38,7 @@ export function WithdrawalActions({ withdrawalId, status, amount }: Props) {
         if (!reason.trim()) return;
         body = { ...body, rejectionReason: reason.trim() };
       }
-      const res = await fetch('/admin/api/withdrawals/decide', {
+      const res = await fetch('/api/withdrawals/decide', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -63,7 +63,7 @@ export function WithdrawalActions({ withdrawalId, status, amount }: Props) {
     }
     setBusy(true);
     try {
-      const res = await fetch('/admin/api/withdrawals/complete', {
+      const res = await fetch('/api/withdrawals/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

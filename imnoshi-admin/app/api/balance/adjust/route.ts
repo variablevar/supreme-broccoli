@@ -25,9 +25,14 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
-  if (parsed.data.kind === 'admin_debit' && parsed.data.amountUsdt > 0) {
-    // Debits should be stored negative to keep the sign convention.
-    parsed.data.amountUsdt = -parsed.data.amountUsdt;
+  // Resolve the actual stored amount. Debits must be negative in the
+  // ledger regardless of which sign the operator typed; we normalise
+  // here so callers can pass either form.
+  let amount = parsed.data.amountUsdt;
+  if (parsed.data.kind === 'admin_debit' && amount > 0) amount = -amount;
+  if (parsed.data.kind === 'admin_credit' && amount < 0) amount = Math.abs(amount);
+  if (amount === 0) {
+    return NextResponse.json({ error: 'Amount must be non-zero' }, { status: 400 });
   }
 
   const supabase = createAdminClient();
@@ -35,7 +40,7 @@ export async function POST(req: NextRequest) {
     .from('balance_ledger')
     .insert({
       user_id: parsed.data.userId,
-      amount_usdt: parsed.data.amountUsdt,
+      amount_usdt: amount,
       kind: parsed.data.kind,
       note: parsed.data.note,
     })
@@ -46,7 +51,7 @@ export async function POST(req: NextRequest) {
   await audit(ctx, 'balance.adjust', {
     targetTable: 'balance_ledger',
     targetId: data.id,
-    details: { ...parsed.data, signed_amount: parsed.data.amountUsdt },
+    details: { ...parsed.data, signed_amount: amount },
     ip: req.headers.get('x-forwarded-for'),
     userAgent: req.headers.get('user-agent'),
   });

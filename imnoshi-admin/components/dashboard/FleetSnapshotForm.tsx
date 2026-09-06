@@ -23,7 +23,7 @@ export function FleetSnapshotForm() {
     event.preventDefault();
     setBusy(true);
     try {
-      const res = await fetch('/admin/api/fleet/snapshot', {
+      const res = await fetch('/api/fleet/snapshot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

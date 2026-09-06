@@ -25,9 +25,17 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
 
   const supabase = createAdminClient();
+  // Map camelCase input -> snake_case columns (the Supabase client
+  // doesn't auto-translate without a configured camelCase option).
   const { data, error } = await supabase
     .from('fleet_stats')
-    .insert({ ...parsed.data, updated_at: new Date().toISOString() })
+    .insert({
+      total_gpus: parsed.data.totalGpus,
+      active_miners: parsed.data.activeMiners,
+      total_hashrate: parsed.data.totalHashrate,
+      daily_rewards: parsed.data.dailyRewards,
+      updated_at: new Date().toISOString(),
+    })
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

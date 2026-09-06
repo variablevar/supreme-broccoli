@@ -40,18 +40,23 @@ export async function POST(req: Request) {
     }
 
     // --- Server-side balance check ---
-    const [rewardsRes, withdrawalsRes] = await Promise.all([
-      supabase.from('rewards').select('amount, status').eq('user_id', dbUser.id),
-      supabase.from('withdrawals').select('amount, status').eq('user_id', dbUser.id),
+    // Single source of truth: customer_balance_v sums every entry in
+    // balance_ledger (rewards + admin_credit + admin_debit +
+    // payout_recorded + correction). Withdrawals only enter the
+    // ledger once the admin records the external payout, so the
+    // view's `balance` already nets out everything except the
+    // currently-pending request.
+    const [balanceRes] = await Promise.all([
+      supabase
+        .from('customer_balance_v')
+        .select('balance')
+        .eq('user_id', dbUser.id)
+        .maybeSingle(),
     ]);
-
-    const claimed = (rewardsRes.data ?? [])
-      .filter((r) => r.status === 'claimed')
-      .reduce((s, r) => s + Number(r.amount), 0);
-    const withdrawn = (withdrawalsRes.data ?? [])
-      .filter((w) => w.status !== 'rejected')
-      .reduce((s, w) => s + Number(w.amount), 0);
-    const available = Math.max(0, claimed - withdrawn);
+    if (balanceRes.error) {
+      return NextResponse.json({ error: balanceRes.error.message }, { status: 500 });
+    }
+    const available = Math.max(0, Number(balanceRes.data?.balance ?? 0));
 
     if (parsed.data.amount > available) {
       return NextResponse.json(
@@ -71,16 +76,28 @@ export async function POST(req: Request) {
       destinationLabel = destination?.label ?? destinationLabel;
     }
 
+    // Some early deployments of the schema lacked destination_id /
+    // destination_label. Probe once per request: if those columns
+    // don't exist yet, omit them from the payload. (Production
+    // deployments that have applied 20260907110000_add_withdrawals_destination.sql
+    // will skip the omission on the first hit.)
+    const colsRes = await supabase.from('withdrawals').select('destination_id').limit(0);
+    const hasDestinationCols = !colsRes.error;
+
+    const baseInsert: Record<string, unknown> = {
+      user_id: dbUser.id,
+      amount: parsed.data.amount,
+      method: parsed.data.method,
+      vip_withdrawal: dbUser.vip_status ?? false,
+    };
+    if (hasDestinationCols) {
+      baseInsert.destination_id = parsed.data.destinationId ?? null;
+      baseInsert.destination_label = destinationLabel;
+    }
+
     const { data, error } = await supabase
       .from('withdrawals')
-      .insert({
-        user_id: dbUser.id,
-        amount: parsed.data.amount,
-        method: parsed.data.method,
-        vip_withdrawal: dbUser.vip_status ?? false,
-        destination_id: parsed.data.destinationId ?? null,
-        destination_label: destinationLabel,
-      })
+      .insert(baseInsert)
       .select()
       .single();
 

@@ -29,7 +29,7 @@ export function DevicePairingPanel() {
     }
     setBusy(true);
     try {
-      const res = await fetch('/admin/api/devices/pairing-codes', {
+      const res = await fetch('/api/devices/pairing-codes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerEmail: email.trim(), deviceName: deviceName.trim() }),
