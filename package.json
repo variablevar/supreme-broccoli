@@ -1,12 +1,12 @@
 {
-  "name": "imnoshi-monorepo",
+  "name": "imo",
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "scripts": {
-    "dev:web": "pnpm --filter imnoshi-web dev",
-    "dev:admin": "pnpm --filter imnoshi-admin dev",
-    "build": "pnpm --filter imnoshi-web build",
-    "start": "pnpm --filter imnoshi-web start",
-    "typecheck": "pnpm --filter imnoshi-web --filter imnoshi-admin typecheck"
+    "dev": "pnpm --filter @imo/platform dev",
+    "dev:web": "pnpm dev",
+    "build": "pnpm --filter @imo/platform build",
+    "start": "pnpm --filter @imo/platform start",
+    "typecheck": "pnpm --filter @imo/platform typecheck"
   }
 }
