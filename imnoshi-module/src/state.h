@@ -9,6 +9,12 @@
 #include <Arduino.h>
 #include <Preferences.h>
 
+// Forward-declare the TFT_eSPI class so state.h's `extern TFT_eSPI tft;`
+// compiles without forcing every includer to drag in the 500KB TFT_eSPI
+// header. The actual definition comes from <TFT_eSPI.h> which main.cpp
+// and phase2.cpp both include before they touch `tft` directly.
+class TFT_eSPI;
+
 // Phase-2 fields. main.cpp's existing struct has only the Phase-1
 // members. We overlay these via a separate struct so we don't have
 // to touch main.cpp's existing renderers.
@@ -37,10 +43,6 @@ struct ServerOverrides {
     bool    online;
     unsigned long uptimeSeconds;
 };
-
-// Defined in main.cpp so existing renderers can keep referring to
-// their existing struct.
-extern DeviceMetrics metrics;
 
 // Defined in main.cpp.
 extern Preferences   nvs;

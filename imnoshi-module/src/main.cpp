@@ -4,6 +4,7 @@
 #include <WiFiManager.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include "state.h"
 #include "phase2.h"
 
 TFT_eSPI tft = TFT_eSPI();

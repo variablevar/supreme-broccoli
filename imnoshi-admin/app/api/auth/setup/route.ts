@@ -122,7 +122,13 @@ export async function POST(req: Request) {
   const blob = byteaToBuffer(row.pending_totp_secret);
   const secret = decryptSecretFromDb(blob);
   if (!verifyTotp(secret, totpCode)) {
-    return NextResponse.json({ error: 'Invalid 6-digit code' }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          'Invalid or expired 6-digit code. The code refreshes every 30s; try again with the latest one.',
+      },
+      { status: 400 }
+    );
   }
 
   const bcrypt = await import('bcryptjs');

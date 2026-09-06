@@ -9,7 +9,7 @@ export type AdminUser = {
   created_at: string | null;
 };
 
-type UserRef = { email: string; uid: string };
+type UserRef = { email: string; uid: string; wallet_address: string | null };
 
 export type AdminWithdrawal = {
   id: string;
@@ -19,6 +19,14 @@ export type AdminWithdrawal = {
   vip_withdrawal: boolean | null;
   created_at: string | null;
   processed_at: string | null;
+  /** The customer-selected payout destination for THIS withdrawal, if any.
+   *  Pulled from public.payout_destinations via destination_id. */
+  destination_id: string | null;
+  destination_label: string | null;
+  destination_network: 'TRC20' | 'ERC20' | 'BEP20' | 'SOL' | null;
+  destination_address: string | null;
+  /** Fallback: the user's primary wallet address from public.users. */
+  wallet_address: string | null;
   users: UserRef | null;
 };
 
@@ -64,7 +72,12 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     supabase.from('users').select('id, uid, email, wallet_address, vip_status, created_at').order('created_at', { ascending: false }),
     supabase
       .from('withdrawals')
-      .select('id, amount, method, status, vip_withdrawal, created_at, processed_at, users(email, uid)')
+      .select(
+        'id, amount, method, status, vip_withdrawal, created_at, processed_at, ' +
+          'destination_id, destination_label, ' +
+          'payout_destination:payout_destinations!destination_id(label, network, address), ' +
+          'users(email, uid, wallet_address)'
+      )
       .order('created_at', { ascending: false })
       .limit(100),
     supabase
@@ -82,10 +95,25 @@ export async function getAdminOverview(): Promise<AdminOverview> {
 
   return {
     users: (usersRes.data ?? []) as AdminUser[],
-    withdrawals: (withdrawalsRes.data ?? []).map((withdrawal) => ({
-      ...withdrawal,
-      users: normalizeUserRef(withdrawal.users),
-    })) as AdminWithdrawal[],
+    withdrawals: (withdrawalsRes.data ?? []).map((withdrawal) => {
+      // Supabase returns payout_destinations as an array (or null).
+      // Take the first match -- a withdrawal points at one destination.
+      const destArr = Array.isArray(withdrawal.payout_destinations)
+        ? withdrawal.payout_destinations
+        : withdrawal.payout_destinations
+          ? [withdrawal.payout_destinations]
+          : [];
+      const dest = destArr[0] ?? null;
+      return {
+        ...withdrawal,
+        destination_network: (dest?.network as AdminWithdrawal['destination_network']) ?? null,
+        destination_address: dest?.address ?? null,
+        // destination_id and destination_label already live on the
+        // withdrawal row, no flattening needed for those.
+        wallet_address: withdrawal.users?.wallet_address ?? null,
+        users: normalizeUserRef(withdrawal.users),
+      };
+    }) as AdminWithdrawal[],
     rewards: (rewardsRes.data ?? []).map((reward) => ({
       ...reward,
       users: normalizeUserRef(reward.users),
