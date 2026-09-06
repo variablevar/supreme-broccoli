@@ -1,3 +1,4 @@
+import { readSession, issueSession, clearSession } from '@/modules/auth/sessions';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
@@ -35,50 +36,10 @@ interface WebUserRow {
   last_login_at: string | null;
 }
 
-function encodeSession(session: CustomerSession): string {
-  return Buffer.from(JSON.stringify(session), 'utf8').toString('base64url');
-}
-
-function decodeSession(raw: string | undefined): CustomerSession | null {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8')) as CustomerSession;
-    if (!parsed.sub || !parsed.userId || !parsed.email || !parsed.stage || !parsed.exp) return null;
-    if (parsed.exp < Date.now()) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
 export async function getSession(): Promise<CustomerSession | null> {
-  const jar = await cookies();
-  return decodeSession(jar.get(SESSION_COOKIE)?.value);
+  return await readSession('customer') as CustomerSession | null;
 }
-
-async function setSessionCookie(res: NextResponse, session: CustomerSession) {
-  res.cookies.set({
-    name: SESSION_COOKIE,
-    value: encodeSession(session),
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: Math.floor((session.exp - Date.now()) / 1000),
-  });
-}
-
-export async function clearSessionCookie(res: NextResponse) {
-  res.cookies.set({
-    name: SESSION_COOKIE,
-    value: '',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 0,
-  });
-}
+export async function clearSessionCookie(res: NextResponse) { await clearSession(res, 'customer'); }
 
 export interface LoginAttemptResult {
   ok: boolean;
@@ -158,13 +119,8 @@ export function makeSession(
   };
 }
 
-export async function startSession(
-  res: NextResponse,
-  account: { id: string; email: string },
-  appUser: { id: string; email: string; uid: string },
-  stage: CustomerSession['stage']
-) {
-  await setSessionCookie(res, makeSession(account, appUser, stage));
+export async function startSession(res: NextResponse, account: { id: string; email: string }, appUser: { id: string; email: string; uid: string }, stage: CustomerSession['stage']) {
+  await issueSession(res, 'customer', account, stage, appUser.id);
 }
 
 /**
@@ -182,7 +138,7 @@ export async function requireCustomer(): Promise<
       response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
     };
   }
-  if (session.stage === 'totp') {
+  if (session.stage !== 'done') {
     return {
       ok: false,
       response: NextResponse.json(

@@ -1,3 +1,4 @@
+import { allowAttempt } from '@/modules/auth/rate-limit';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
   }
   const { email, password } = parsed.data;
 
+  if (!await allowAttempt('admin/auth:password:' + email.trim().toLowerCase())) return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 });
   let result;
   try {
     result = await verifyPassword(email, password);
@@ -48,17 +50,7 @@ export async function POST(req: Request) {
   if (!result.ok || !result.account) {
     // Differentiate "no such email" from "wrong password" so the UI
     // can surface an actionable hint (e.g. don't paste your UID).
-    const reason = result.reason ?? 'bad_password';
-    const errorMessage =
-      reason === 'unknown_email'
-        ? 'No admin account with that email. Allowed addresses are set via ADMIN_EMAILS.'
-        : reason === 'locked'
-          ? 'Account locked. Try again in 15 minutes.'
-          : 'Wrong password. For first login the shared password is Imnoshi@2026.';
-    const res = NextResponse.json(
-      { error: errorMessage, reason },
-      { status: 401 }
-    );
+    const res = NextResponse.json({ error: 'Unable to sign in. Check your credentials or try again later.' }, { status: 401 });
     await clearSessionCookie(res);
     return res;
   }
@@ -67,7 +59,7 @@ export async function POST(req: Request) {
 //   must_reset_password = true  -> 'reset' (first-login setup wizard)
 //   totp_enrolled        = true -> 'totp'  (still need the 6-digit code)
 //   otherwise                  -> 'done'  (password-only sign-in)
-const stage: 'reset' | 'totp' | 'done' = result.account.must_reset_password
+const stage: 'reset' | 'totp' | 'done' = (result.account.must_reset_password || !result.account.totp_enrolled)
   ? 'reset'
   : result.account.totp_enrolled
     ? 'totp'

@@ -1,3 +1,4 @@
+import { allowAttempt } from '@/modules/auth/rate-limit';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
   }
   const { email, password } = parsed.data;
 
+  if (!await allowAttempt('auth:password:' + email.trim().toLowerCase())) return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 });
   let result;
   try {
     result = await verifyPassword(email, password);
@@ -40,15 +42,7 @@ export async function POST(req: Request) {
     // exists but password is wrong" -- the latter is far more common
     // (typos, pasted-UID-instead-of-password, etc.) and the message
     // for that case is more actionable.
-    const reason = result.reason ?? 'bad_password';
-    const errorMessage =
-      reason === 'unknown_email'
-        ? 'No account found for that email. Sign in with your @imnoshi.com email (not your UID).'
-        : 'Wrong password. Passwords are case-sensitive and <FirstName>-2026! for seeded demo accounts.';
-    const res = NextResponse.json(
-      { error: errorMessage, reason },
-      { status: 401 }
-    );
+    const res = NextResponse.json({ error: 'Unable to sign in. Check your credentials or try again later.' }, { status: 401 });
     await clearSessionCookie(res);
     return res;
   }

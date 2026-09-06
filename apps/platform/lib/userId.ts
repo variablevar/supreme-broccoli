@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import type { createAdminClient } from '@/lib/supabase';
-import { generateUID } from '@/lib/wallet';
+
 
 type DbClient = ReturnType<typeof createAdminClient>;
 
@@ -35,23 +35,12 @@ export async function ensureDbUser(
 
   const { data: existing, error: selectError } = await supabase
     .from('users')
-    .select('id, uid, email, wallet_address, vip_status, language_preference, theme_preference, created_at, updated_at')
+    .select('id, uid, email, language_preference, theme_preference, created_at, updated_at')
     .eq('email', normalized)
     .maybeSingle();
 
   if (selectError) throw selectError;
   if (existing) return existing as AppUserRow;
 
-  const { data, error } = await supabase
-    .from('users')
-    .insert({
-      id: randomUUID(),
-      uid: generateUID(),
-      email: normalized,
-    })
-    .select('id, uid, email, wallet_address, vip_status, language_preference, theme_preference, created_at, updated_at')
-    .single();
-
-  if (error) throw error;
-  return data as AppUserRow;
+  throw new Error('Account profile is missing');
 }

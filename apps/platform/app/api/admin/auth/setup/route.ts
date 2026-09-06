@@ -1,3 +1,4 @@
+import { allowAttempt } from '@/modules/auth/rate-limit';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase';
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
+  if (!await allowAttempt('admin/auth:setup:' + session.sub, 5)) return NextResponse.json({ error: 'Too many attempts' }, { status: 429 });
   const { newPassword, totpCode } = parsed.data;
 
   const supabase = createAdminClient();

@@ -1,77 +1,19 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { randomUUID } from 'node:crypto';
+import { hash } from 'bcryptjs';
 import { createAdminClient } from '@/lib/supabase';
-import { generateUID } from '@/lib/wallet';
-import { ensureDbUser } from '@/lib/userId';
 import { startSession } from '@/lib/customerAuth';
-
-const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(10).max(256),
-});
-
-/**
- * POST /api/auth/register
- * Body: { email, password }
- *
- * - Creates a web_users row (auth) AND a users row (app profile) in one
- *   shot, linking them by email.
- * - Auto-signs the new account in (stage='done' since they haven't
- *   enrolled TOTP yet).
- *
- * Re-registering an existing email returns 409.
- */
+import { allowAttempt } from '@/modules/auth/rate-limit';
+const schema = z.object({ email: z.string().trim().email().max(254), password: z.string().min(12).max(72) }).strict();
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
-  }
-  const { email, password } = parsed.data;
-  const normalized = email.trim().toLowerCase();
-
-  const supabase = createAdminClient();
-
-  // Refuse if already registered.
-  const { data: existing } = await supabase
-    .from('web_users')
-    .select('id')
-    .eq('email', normalized)
-    .maybeSingle();
-  if (existing) {
-    return NextResponse.json(
-      { error: 'An account with that email already exists. Try signing in.' },
-      { status: 409 }
-    );
-  }
-
-  const bcrypt = await import('bcryptjs');
-  const passwordHash = bcrypt.hashSync(password, 10);
-
-  const { data: webUser, error: wErr } = await supabase
-    .from('web_users')
-    .insert({
-      email: normalized,
-      password_hash: passwordHash,
-      must_reset_password: false,
-      totp_enrolled: false,
-    })
-    .select('id, email')
-    .single();
-  if (wErr) {
-    return NextResponse.json({ error: wErr.message }, { status: 500 });
-  }
-
-  // Provision the app-level users row (uid + email). Reuse the helper.
-  const appUser = await ensureDbUser(supabase, normalized);
-
-  const res = NextResponse.json({ stage: 'done', email: webUser.email });
-  await startSession(
-    res,
-    { id: webUser.id, email: webUser.email },
-    { id: appUser.id, email: appUser.email, uid: appUser.uid },
-    'done'
-  );
-  // avoid unused-import warning on dev builds
-  void generateUID;
+  if (!parsed.success) return NextResponse.json({ error: 'Enter a valid email and a password of 12–72 characters.' }, { status: 400 });
+  const email = parsed.data.email.toLowerCase();
+  if (!await allowAttempt('register:' + email, 5)) return NextResponse.json({ error: 'Too many attempts' }, { status: 429 });
+  const { data, error } = await createAdminClient().rpc('register_customer', { p_email: email, p_password_hash: await hash(parsed.data.password, 12), p_uid: 'IMO-' + randomUUID().slice(0, 8).toUpperCase() });
+  if (error) return NextResponse.json({ error: error.code === '23505' ? 'An account already exists. Sign in instead.' : 'Could not create account.' }, { status: error.code === '23505' ? 409 : 500 });
+  const res = NextResponse.json({ stage: 'done', email });
+  await startSession(res, { id: data.id, email }, { id: data.user_id, email, uid: data.uid }, 'done');
   return res;
 }

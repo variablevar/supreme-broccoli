@@ -15,3 +15,7 @@ Repository consolidation, authentication, transaction-safe accounting, device li
 ## Step 2 — repository consolidation
 
 Customer and administrator routes now live in `apps/platform`; admin routes are namespaced under `/admin` and `/api/admin`. Firmware moved to `firmware/esp32-s3`, historical SQL to `database/legacy`. Landing components and translation/theme runtimes are retained. BrandLogo now renders Imo text. Legacy admin configuration is archived pending final cleanup.
+
+## Step 3 — identity boundary
+
+Replaced editable JSON cookies with random opaque tokens stored hashed in Postgres, separate customer/admin audiences, expiry checks and account/session-version validation. Password/TOTP changes invalidate previous sessions. Added origin checks, atomic rate limits, mandatory admin TOTP, authenticated secret encryption and atomic customer registration. Four authentication primitive tests passed; database/HTTP integration verification follows after the fresh schema is complete.

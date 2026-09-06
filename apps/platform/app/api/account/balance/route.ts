@@ -1,3 +1,4 @@
+import { requireCustomer } from '@/lib/customerAuth';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
 import { ensureDbUser } from '@/lib/userId';
@@ -14,26 +15,9 @@ import { ensureDbUser } from '@/lib/userId';
  * always agree.
  */
 export async function GET() {
-  const { cookies } = await import('next/headers');
-  const jar = await cookies();
-  const raw = jar.get('imnoshi_customer_session')?.value;
-  if (!raw) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  let email: string | null = null;
-  try {
-    const sess = JSON.parse(
-      Buffer.from(raw, 'base64url').toString('utf8')
-    ) as { email?: string; exp?: number };
-    if (sess.email && sess.exp && sess.exp > Date.now()) {
-      email = sess.email;
-    }
-  } catch {
-    // fallthrough
-  }
-  if (!email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireCustomer();
+  if (!guard.ok) return guard.response;
+  const email = guard.session.email;
 
   const supabase = createAdminClient();
   const dbUser = await ensureDbUser(supabase, email);

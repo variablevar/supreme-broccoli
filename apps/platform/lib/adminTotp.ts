@@ -1,3 +1,4 @@
+import { seal, open } from '@/modules/auth/encryption';
 import { generateSecret, generateURI, verifySync } from 'otplib';
 import QRCode from 'qrcode';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
@@ -9,35 +10,8 @@ export function generateFreshSecret(): string {
 
 const ISSUER = 'IMNOSHI Admin';
 
-const ENCRYPTION_KEY = (() => {
-  const raw = process.env.ADMIN_TOTP_ENC_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
-  if (!raw) {
-    throw new Error(
-      'ADMIN_TOTP_ENC_KEY or SUPABASE_SERVICE_ROLE_KEY must be set so TOTP secrets can be encrypted at rest.'
-    );
-  }
-  // SHA-256 of the key material, truncated to 32 bytes for AES-256.
-  return createHash('sha256').update(raw).digest();
-})();
-
-/**
- * Encrypt a TOTP secret with AES-256-CTR using a key derived from
- * SUPABASE_SERVICE_ROLE_KEY. Returns IV || ciphertext.
- */
-export function encryptSecret(plain: string): Buffer {
-  const iv = randomBytes(16);
-  const cipher = createCipheriv('aes-256-ctr', ENCRYPTION_KEY, iv);
-  const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
-  return Buffer.concat([iv, ciphertext]);
-}
-
-/** Decrypt a buffer produced by encryptSecret. */
-export function decryptSecret(blob: Buffer): string {
-  const iv = blob.subarray(0, 16);
-  const ciphertext = blob.subarray(16);
-  const decipher = createDecipheriv('aes-256-ctr', ENCRYPTION_KEY, iv);
-  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
-}
+export const encryptSecret = seal;
+export const decryptSecret = open;
 
 export interface TotpEnrollment {
   secret: string;

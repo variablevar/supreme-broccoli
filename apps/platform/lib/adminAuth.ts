@@ -1,3 +1,4 @@
+import { readSession, issueSession, clearSession } from '@/modules/auth/sessions';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
@@ -37,50 +38,10 @@ function splitEmails(raw: string | undefined): string[] {
   return (raw ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
 }
 
-function encodeSession(session: AdminSession): string {
-  return Buffer.from(JSON.stringify(session), 'utf8').toString('base64url');
-}
-
-function decodeSession(raw: string | undefined): AdminSession | null {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8')) as AdminSession;
-    if (!parsed.email || !parsed.sub || !parsed.stage || !parsed.iat || !parsed.exp) return null;
-    if (parsed.exp < Date.now()) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
 export async function getSession(): Promise<AdminSession | null> {
-  const jar = await cookies();
-  return decodeSession(jar.get(SESSION_COOKIE)?.value);
+  return await readSession('admin') as AdminSession | null;
 }
-
-async function setSessionCookie(res: NextResponse, session: AdminSession) {
-  res.cookies.set({
-    name: SESSION_COOKIE,
-    value: encodeSession(session),
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: Math.floor((session.exp - Date.now()) / 1000),
-  });
-}
-
-export async function clearSessionCookie(res: NextResponse) {
-  res.cookies.set({
-    name: SESSION_COOKIE,
-    value: '',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 0,
-  });
-}
+export async function clearSessionCookie(res: NextResponse) { await clearSession(res, 'admin'); }
 
 export function getAllowedAdminEmails(): string[] {
   return splitEmails(process.env.ADMIN_EMAILS);
@@ -164,12 +125,8 @@ export function makeSession(account: { id: string; email: string }, stage: Admin
   };
 }
 
-export async function startSession(
-  res: NextResponse,
-  account: { id: string; email: string },
-  stage: AdminSession['stage']
-) {
-  await setSessionCookie(res, makeSession(account, stage));
+export async function startSession(res: NextResponse, account: { id: string; email: string }, stage: AdminSession['stage']) {
+  await issueSession(res, 'admin', account, stage);
 }
 
 /**
@@ -180,14 +137,7 @@ export async function startSession(
 export async function getAdminRole(): Promise<AdminRole> {
   const session = await getSession();
   if (!session || session.stage !== 'done') return 'none';
-  // The allowlist is "ADMIN_EMAILS env OR the admin_users table has
-  // this email". When admin_users is empty / the migration hasn't
-  // run yet, fall back to the env so the bootstrap admin can still
-  // log in. Once at least one real row exists, treat the DB as the
-  // source of truth.
-  if (isAllowedAdminEmail(session.email)) return 'full';
-  if (await hasAdminUserRow(session.email)) return 'full';
-  return 'none';
+  return 'full';
 }
 
 export async function isAdmin(): Promise<boolean> {

@@ -35,7 +35,7 @@ export function LoginForm() {
         } else if (data?.reason === 'bad_password') {
           toast.error(
             (data.error as string) ||
-              'Wrong password. For first login the shared password is Imnoshi@2026.'
+              'Wrong password. For first login the shared password is your provisioned password.'
           );
         } else if (data?.reason === 'unknown_email') {
           toast.error(

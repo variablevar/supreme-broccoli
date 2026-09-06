@@ -35,7 +35,7 @@ export function LoginForm() {
           // The server returns a more specific hint for this case.
           toast.error(
             (data.error as string) ||
-              'Wrong password. For seeded demo accounts the password is <FirstName>-2026!.'
+              'Wrong password. For seeded demo accounts the password is your password.'
           );
         } else if (data?.reason === 'unknown_email') {
           toast.error(

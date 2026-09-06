@@ -36,7 +36,7 @@ export async function GET() {
   const { error } = await supabase
     .from('web_users')
     .update({
-      pending_totp_secret: encryptSecret(secret),
+      pending_totp_secret: `\\x${encryptSecret(secret).toString('hex')}`,
       pending_totp_secret_expires_at: expiresAt,
     })
     .eq('id', guard.session.sub);
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
   const { error } = await supabase
     .from('web_users')
     .update({
-      totp_secret_encrypted: encryptSecret(secret),
+      totp_secret_encrypted: `\\x${encryptSecret(secret).toString('hex')}`,
       totp_enrolled: true,
       pending_totp_secret: null,
       pending_totp_secret_expires_at: null,
