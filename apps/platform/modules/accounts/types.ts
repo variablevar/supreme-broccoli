@@ -63,6 +63,17 @@ export interface Account {
   ledger: LedgerEntry[];
 }
 export interface OperatorOverview {
+  login_security: {
+    id: string;
+    audience: "customer" | "admin";
+    attempted_email: string;
+    outcome: string;
+    ip_address: string | null;
+    country: string | null;
+    region: string | null;
+    user_agent: string | null;
+    created_at: string;
+  }[];
   applications: {
     id: string;
     email: string;

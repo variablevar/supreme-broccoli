@@ -7,6 +7,7 @@ import {
   verifyPassword,
 } from "@/lib/adminAuth";
 import { internalError } from "@/modules/http/errors";
+import { recordLoginFailure } from "@/modules/auth/security-events";
 
 const schema = z.object({
   email: z.string().email(),
@@ -22,19 +23,30 @@ const schema = z.object({
  *   - 'done'  = fully signed in
  */
 export async function POST(req: Request) {
-  const parsed = schema.safeParse(await req.json().catch(() => null));
+  const body = await req.json().catch(() => null);
+  const attemptedEmail =
+    body &&
+    typeof body === "object" &&
+    "email" in body &&
+    typeof body.email === "string"
+      ? body.email
+      : "";
+  const parsed = schema.safeParse(body);
   if (!parsed.success) {
+    await recordLoginFailure(req, "admin", attemptedEmail, "invalid_request");
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
   const { email, password } = parsed.data;
 
   if (
     !(await allowAttempt("admin/auth:password:" + email.trim().toLowerCase()))
-  )
+  ) {
+    await recordLoginFailure(req, "admin", email, "rate_limited");
     return NextResponse.json(
       { error: "Too many attempts. Try again later." },
       { status: 429 },
     );
+  }
   let result;
   try {
     result = await verifyPassword(email, password);
@@ -43,6 +55,16 @@ export async function POST(req: Request) {
   }
 
   if (!result.ok || !result.account) {
+    await recordLoginFailure(
+      req,
+      "admin",
+      email,
+      result.reason === "locked"
+        ? "locked"
+        : result.reason === "bad_password"
+          ? "bad_password"
+          : "unknown_email",
+    );
     // Differentiate "no such email" from "wrong password" so the UI
     // can surface an actionable hint (e.g. don't paste your UID).
     const res = NextResponse.json(

@@ -28,7 +28,8 @@ Device: securely authenticate, show a short-lived pairing code, receive publishe
 5. Customer saves an ERC20 address and requests a withdrawal. Available funds decrease through a reservation.
 6. Rejecting releases only that reservation. Approving retains it. Recording payment atomically debits the ledger and closes the request.
 7. A paired device earns its configured daily reward only after accumulating 24 hours of authenticated online heartbeat time. Each credit appears in the customer's account activity and the operator audit trail.
-7. Refreshes, concurrent requests, retries, and reconnects do not duplicate claims, credits, or payments.
+8. Registration requires an `@imnoshi.com` email address and operator approval. Pending applicants who authenticate with their submitted password are directed to `support@imnoshi.com`.
+9. Refreshes, concurrent requests, retries, and reconnects do not duplicate claims, credits, or payments.
 
 ## Preserved capabilities
 

@@ -46,7 +46,12 @@ export async function clearSessionCookie(res: NextResponse) {
 
 export interface LoginAttemptResult {
   ok: boolean;
-  reason?: "unknown_email" | "locked" | "bad_password" | "no_app_user";
+  reason?:
+    | "unknown_email"
+    | "locked"
+    | "bad_password"
+    | "no_app_user"
+    | "approval_required";
   account?: WebUserRow;
   appUser?: { id: string; email: string; uid: string } | null;
 }
@@ -72,6 +77,18 @@ export async function verifyPassword(
   if (error) throw error;
   if (!data) {
     const bcrypt = await import("bcryptjs");
+    const { data: application, error: applicationError } = await supabase
+      .from("registration_applications")
+      .select("password_hash,status")
+      .eq("email", normalized)
+      .maybeSingle();
+    if (applicationError) throw applicationError;
+    if (
+      application &&
+      application.status !== "approved" &&
+      (await bcrypt.compare(password, application.password_hash))
+    )
+      return { ok: false, reason: "approval_required" };
     await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
     return { ok: false, reason: "unknown_email" };
   }

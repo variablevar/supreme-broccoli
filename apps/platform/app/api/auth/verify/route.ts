@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase";
 import { getSession, startSession } from "@/lib/customerAuth";
 import { byteaToBuffer, decryptSecret, verifyTotp } from "@/lib/customerTotp";
 import { internalError } from "@/modules/http/errors";
+import { recordLoginFailure } from "@/modules/auth/security-events";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +30,13 @@ export async function POST(req: Request) {
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
+    await recordLoginFailure(req, "customer", session.email, "invalid_totp");
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
-  if (!(await allowAttempt("auth:totp:" + session.sub, 5)))
+  if (!(await allowAttempt("auth:totp:" + session.sub, 5))) {
+    await recordLoginFailure(req, "customer", session.email, "rate_limited");
     return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
+  }
   const { totpCode } = parsed.data;
 
   const supabase = createAdminClient();
@@ -53,6 +57,7 @@ export async function POST(req: Request) {
   const blob = byteaToBuffer(data.totp_secret_encrypted);
   const secret = decryptSecret(blob);
   if (!verifyTotp(secret, totpCode)) {
+    await recordLoginFailure(req, "customer", session.email, "invalid_totp");
     return NextResponse.json(
       { error: "Invalid 6-digit code" },
       { status: 401 },

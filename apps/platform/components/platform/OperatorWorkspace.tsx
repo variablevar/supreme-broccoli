@@ -38,6 +38,7 @@ export function OperatorWorkspace({
       balance: "Account adjustments",
       audit: "Audit trail",
       registrations: "User applications",
+      security: "Login security",
     } as Record<string, string>
   )[section];
   return (
@@ -258,6 +259,65 @@ export function OperatorWorkspace({
                 </div>
               ) : (
                 <Empty>No operator actions yet.</Empty>
+              )}
+            </Panel>
+          )}
+          {section === "security" && (
+            <Panel
+              title="Failed login attempts"
+              description="Latest 200 rejected password and two-factor attempts. Attempted passwords are never stored."
+            >
+              {data.login_security.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-muted-foreground">
+                        <th className="py-3">Attempted credential</th>
+                        <th className="py-3">Result</th>
+                        <th className="py-3">Source</th>
+                        <th className="py-3">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.login_security.map((event) => (
+                        <tr
+                          key={event.id}
+                          className="border-b border-border align-top"
+                        >
+                          <td data-no-translate className="py-4 pr-4">
+                            <span className="font-medium">
+                              {event.attempted_email || "Invalid request"}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                              {event.audience}
+                            </span>
+                          </td>
+                          <td className="py-4 pr-4">
+                            <Status>
+                              {event.outcome.replaceAll("_", " ")}
+                            </Status>
+                          </td>
+                          <td data-no-translate className="py-4 pr-4">
+                            <span>{event.ip_address || "Unavailable"}</span>
+                            <span className="block text-xs text-muted-foreground">
+                              {[event.region, event.country]
+                                .filter(Boolean)
+                                .join(", ") || "Region unavailable"}
+                            </span>
+                          </td>
+                          <td
+                            data-no-translate
+                            className="whitespace-nowrap py-4"
+                          >
+                            {new Date(event.created_at).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <Empty>No failed login attempts recorded.</Empty>
               )}
             </Panel>
           )}

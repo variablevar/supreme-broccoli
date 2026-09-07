@@ -6,7 +6,7 @@ test("real customer, operator and device acceptance journey", async ({
   page,
   playwright,
 }) => {
-  const email = `customer-${randomUUID()}@example.test`,
+  const email = `customer-${randomUUID()}@imnoshi.com`,
     password = "Customer-test-password!";
   await page.goto("/register");
   await page.getByLabel("Email", { exact: true }).fill(email);
@@ -18,14 +18,16 @@ test("real customer, operator and device acceptance journey", async ({
   await expect(
     page.getByText("Application received", { exact: true }),
   ).toBeVisible();
-  expect(
-    (
-      await page.request.post("/api/auth/login", {
-        headers: { Origin: "http://127.0.0.1:3100" },
-        data: { email, password },
-      })
-    ).status(),
-  ).toBe(401);
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await expect(page.getByText(/contact support@imnoshi\.com/i)).toBeVisible();
+  const outsideDomain = await page.request.post("/api/auth/register", {
+    headers: { Origin: "http://127.0.0.1:3100" },
+    data: { email: `outsider-${randomUUID()}@example.test`, password },
+  });
+  expect(outsideDomain.status()).toBe(400);
   const admin = await playwright.request.newContext({
     baseURL: "http://127.0.0.1:3100",
     extraHTTPHeaders: { Origin: "http://127.0.0.1:3100" },
@@ -50,6 +52,13 @@ test("real customer, operator and device acceptance journey", async ({
     ).ok(),
   ).toBeTruthy();
   const overview = await (await admin.get("/api/admin/overview")).json();
+  expect(
+    overview.login_security.some(
+      (event: { attempted_email: string; outcome: string }) =>
+        event.attempted_email === email &&
+        event.outcome === "approval_required",
+    ),
+  ).toBeTruthy();
   const application = overview.applications.find(
     (item: { email: string }) => item.email === email,
   );

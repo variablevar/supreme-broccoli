@@ -14,6 +14,7 @@ import {
   UserCheck,
   ScrollText,
   Landmark,
+  ShieldAlert,
 } from "lucide-react";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ const admin = [
   ["/admin/withdrawals", "Withdrawals", ArrowUpRight],
   ["/admin/balance", "Balance", Landmark],
   ["/admin/audit", "Audit Log", ScrollText],
+  ["/admin/security", "Login security", ShieldAlert],
   ["/admin/settings", "Settings", Settings],
 ] as const;
 export function Shell({
