@@ -8,6 +8,8 @@ Customer and operator cookies contain random 256-bit opaque values. PostgreSQL s
 
 Registration applications accept only `@imnoshi.com` addresses, enforced in both the API and PostgreSQL. A pending or rejected applicant sees the approval/support message only after providing the password hash associated with that application, which avoids exposing application status to someone who knows only an email address.
 
+The public contact endpoint validates a strict request shape, caps every text field and the overall request size, includes a bot-trap field, and applies independent per-IP and per-email rate limits. It returns only an acknowledgement. Contact records have no browser-role database grants; admins access them through authenticated server routes, and status changes create immutable audit events.
+
 Failed customer and operator authentication attempts are written to the append-only login security log. Records include the attempted email, authentication stage/outcome, sanitized IP and provider-supplied country/region headers, user agent, and time. Attempted passwords and TOTP values are never stored. Geographic fields are trustworthy only when the deployment proxy removes client-supplied forwarding headers and supplies its own verified values.
 
 Unsafe browser requests must carry the exact `APP_ORIGIN`. Missing and cross-origin requests are rejected. Device endpoints are exempt only when the request path is under `/api/v1/device/` and carries a correctly shaped bearer credential; the credential is then hash-matched against a non-revoked device.

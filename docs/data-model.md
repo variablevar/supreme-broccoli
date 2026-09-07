@@ -4,6 +4,7 @@
 
 - Auth accounts and profiles: password/TOTP identity, profile UID, language/theme. Server-validated sessions link to immutable IDs.
 - Registration applications: email, bcrypt password hash, review status, reviewer, timestamp and optional rejection reason. Pending rows are not accounts and cannot authenticate.
+- Contact inquiries: sender name/email, subject, message, review status and timestamps. Admin status changes are atomic and create an operator audit event.
 - Devices: unique hardware UID, credential hash, optional owner, revoked flag.
 - Pairing codes: device, unique code, expiry and claim status. Claim is atomic.
 - Published state: device, versioned content, operator and timestamp.

@@ -1,9 +1,10 @@
-import { Mail, MessageCircle, ShieldCheck } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { GlassCard } from '@/components/shared/GlassCard';
+import { ContactForm } from '@/components/marketing/contact/ContactForm';
 
 export const metadata = {
   title: 'Contact — IMNOSHI',
-  description: 'Get in touch with the IMNOSHI team about monitor nodes, GPU infrastructure and account support.',
+  description: 'Send the IMNOSHI team a general enquiry about monitor nodes, GPU infrastructure or partnerships.',
 };
 
 export default function ContactPage() {
@@ -16,13 +17,13 @@ export default function ContactPage() {
           </span>
           <h1 className="font-space text-4xl md:text-5xl font-bold text-foreground mb-4">Get in touch</h1>
           <p className="text-foreground/60 max-w-xl mx-auto leading-relaxed">
-            Questions about a monitor node, GPU infrastructure or your account? Reach out and the IMNOSHI team will
-            follow up.
+            Questions about a monitor node, GPU infrastructure or a partnership? Send an enquiry and the IMNOSHI
+            team will follow up.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <GlassCard>
+        <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
+          <GlassCard hover={false}>
             <div className="flex items-center gap-3 mb-4">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Mail size={20} />
@@ -39,51 +40,12 @@ export default function ContactPage() {
               support@imnoshi.com
             </a>
           </GlassCard>
-
-          <GlassCard>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <ShieldCheck size={20} />
-              </span>
-              <h3 className="font-space text-xl font-semibold text-foreground">Account support</h3>
-            </div>
-            <p className="text-foreground/60 mb-4 leading-relaxed">
-              Already have a device? Sign in for UID-linked support, or reach the account team directly.
-            </p>
-            <a
-              href="mailto:support@imnoshi.com"
-              className="block rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-            >
-              support@imnoshi.com
-            </a>
+          <GlassCard hover={false}>
+            <h2 className="mb-2 font-space text-2xl font-semibold text-foreground">Send a general enquiry</h2>
+            <p className="mb-6 text-sm text-foreground/60">Complete the form and your message will go directly to the IMNOSHI admin team.</p>
+            <ContactForm />
           </GlassCard>
         </div>
-
-        <GlassCard className="mt-6">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <MessageCircle size={20} />
-            </span>
-            <h3 className="font-space text-xl font-semibold text-foreground">What to include</h3>
-          </div>
-          <ul className="space-y-2 text-sm text-foreground/60">
-            <li className="flex items-start gap-2">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-              Your account UID, if you already have a monitor node
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-              A short description of your question or issue
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-              The best way and time to reach you
-            </li>
-          </ul>
-          <p className="mt-6 text-xs text-foreground/40">
-            Email <a href="mailto:support@imnoshi.com" className="text-primary hover:underline">support@imnoshi.com</a> and our team will follow up.
-          </p>
-        </GlassCard>
       </div>
     </section>
   );

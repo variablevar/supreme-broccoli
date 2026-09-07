@@ -38,6 +38,7 @@ export function OperatorWorkspace({
       balance: "Account adjustments",
       audit: "Audit trail",
       registrations: "User applications",
+      inquiries: "General enquiries",
       security: "Login security",
     } as Record<string, string>
   )[section];
@@ -164,6 +165,22 @@ export function OperatorWorkspace({
                 </div>
               ) : (
                 <Empty>No registration applications yet.</Empty>
+              )}
+            </Panel>
+          )}
+          {section === "inquiries" && (
+            <Panel
+              title="Contact inbox"
+              description="Messages submitted through the public Contact page. Open a reply in your email client, then update the review status here."
+            >
+              {data.contact_inquiries.length ? (
+                <div className="space-y-4">
+                  {data.contact_inquiries.map((inquiry) => (
+                    <ContactInquiryRow key={inquiry.id} inquiry={inquiry} onChange={refresh} />
+                  ))}
+                </div>
+              ) : (
+                <Empty>No general enquiries yet.</Empty>
               )}
             </Panel>
           )}
@@ -324,6 +341,63 @@ export function OperatorWorkspace({
         </>
       )}
     </div>
+  );
+}
+function ContactInquiryRow({
+  inquiry,
+  onChange,
+}: {
+  inquiry: OperatorOverview["contact_inquiries"][number];
+  onChange: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function setStatus(status: "new" | "in_progress" | "resolved") {
+    setBusy(true);
+    setError("");
+    try {
+      await request(`/api/admin/contact-inquiries/${inquiry.id}`, { status });
+      onChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not update enquiry");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <article className="rounded-xl border border-border p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 data-no-translate className="font-medium">{inquiry.subject}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            <span data-no-translate>{inquiry.name} · {inquiry.email}</span> · {new Date(inquiry.created_at).toLocaleString()}
+          </p>
+        </div>
+        <Status>{inquiry.status.replaceAll("_", " ")}</Status>
+      </div>
+      <p data-no-translate className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-foreground/80">{inquiry.message}</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <a href={`mailto:${inquiry.email}?subject=${encodeURIComponent(`Re: ${inquiry.subject}`)}`} className={buttonClass}>
+          Reply by email
+        </a>
+        {inquiry.status !== "in_progress" && (
+          <button disabled={busy} onClick={() => setStatus("in_progress")} className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50">
+            Mark in progress
+          </button>
+        )}
+        {inquiry.status !== "resolved" && (
+          <button disabled={busy} onClick={() => setStatus("resolved")} className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50">
+            Mark resolved
+          </button>
+        )}
+        {inquiry.status !== "new" && (
+          <button disabled={busy} onClick={() => setStatus("new")} className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50">
+            Reopen
+          </button>
+        )}
+      </div>
+      <ErrorMessage message={error} />
+    </article>
   );
 }
 function ApplicationRow({

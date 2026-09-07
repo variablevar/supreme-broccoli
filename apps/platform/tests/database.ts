@@ -45,6 +45,7 @@ export async function database() {
     "007_bulk_device_publications.sql",
     "008_online_device_rewards.sql",
     "009_login_security_and_email_domain.sql",
+    "010_contact_inquiries.sql",
   ])
     await db.exec(
       await readFile(

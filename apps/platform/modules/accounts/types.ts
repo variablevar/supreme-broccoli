@@ -63,6 +63,16 @@ export interface Account {
   ledger: LedgerEntry[];
 }
 export interface OperatorOverview {
+  contact_inquiries: {
+    id: string;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    status: "new" | "in_progress" | "resolved";
+    created_at: string;
+    updated_at: string;
+  }[];
   login_security: {
     id: string;
     audience: "customer" | "admin";
