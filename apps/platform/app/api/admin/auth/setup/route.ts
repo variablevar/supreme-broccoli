@@ -1,11 +1,8 @@
-import { allowAttempt } from '@/modules/auth/rate-limit';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase';
-import {
-  getSession,
-  startSession,
-} from '@/lib/adminAuth';
+import { allowAttempt } from "@/modules/auth/rate-limit";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createAdminClient } from "@/lib/supabase";
+import { getSession, startSession } from "@/lib/adminAuth";
 import {
   byteaToBuffer,
   decryptSecretFromDb,
@@ -14,9 +11,10 @@ import {
   generateFreshSecret,
   PENDING_TOTP_TTL_MS,
   verifyTotp,
-} from '@/lib/adminTotp';
+} from "@/lib/adminTotp";
+import { internalError } from "@/modules/http/errors";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const getSchema = z.object({});
 
@@ -33,9 +31,10 @@ const getSchema = z.object({});
  */
 export async function GET() {
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.stage !== 'reset') {
-    return NextResponse.json({ error: 'Already set up' }, { status: 409 });
+  if (!session)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.stage !== "reset") {
+    return NextResponse.json({ error: "Already set up" }, { status: 409 });
   }
 
   const secret = generateFreshSecret();
@@ -44,17 +43,14 @@ export async function GET() {
 
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from('admin_users')
+    .from("admin_users")
     .update({
       pending_totp_secret: encryptSecretForDb(secret),
       pending_totp_secret_expires_at: expiresAt,
     })
-    .eq('id', session.sub);
+    .eq("id", session.sub);
   if (error) {
-    return NextResponse.json(
-      { error: `Failed to persist TOTP enrollment: ${error.message}` },
-      { status: 500 }
-    );
+    return internalError("Admin TOTP enrollment write failed", error);
   }
 
   return NextResponse.json({
@@ -82,31 +78,33 @@ const postSchema = z.object({
  */
 export async function POST(req: Request) {
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.stage !== 'reset') {
-    return NextResponse.json({ error: 'Already set up' }, { status: 409 });
+  if (!session)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.stage !== "reset") {
+    return NextResponse.json({ error: "Already set up" }, { status: 409 });
   }
 
   const parsed = postSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
-  if (!await allowAttempt('admin/auth:setup:' + session.sub, 5)) return NextResponse.json({ error: 'Too many attempts' }, { status: 429 });
+  if (!(await allowAttempt("admin/auth:setup:" + session.sub, 5)))
+    return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
   const { newPassword, totpCode } = parsed.data;
 
   const supabase = createAdminClient();
   const { data: row, error: selErr } = await supabase
-    .from('admin_users')
-    .select('pending_totp_secret, pending_totp_secret_expires_at')
-    .eq('id', session.sub)
+    .from("admin_users")
+    .select("pending_totp_secret, pending_totp_secret_expires_at")
+    .eq("id", session.sub)
     .maybeSingle();
   if (selErr) {
-    return NextResponse.json({ error: selErr.message }, { status: 500 });
+    return internalError("Admin TOTP enrollment read failed", selErr);
   }
   if (!row?.pending_totp_secret) {
     return NextResponse.json(
-      { error: 'TOTP enrollment expired. Reload the page to get a new QR.' },
-      { status: 410 }
+      { error: "TOTP enrollment expired. Reload the page to get a new QR." },
+      { status: 410 },
     );
   }
   if (
@@ -114,8 +112,8 @@ export async function POST(req: Request) {
     new Date(row.pending_totp_secret_expires_at).getTime() < Date.now()
   ) {
     return NextResponse.json(
-      { error: 'TOTP enrollment expired. Reload the page to get a new QR.' },
-      { status: 410 }
+      { error: "TOTP enrollment expired. Reload the page to get a new QR." },
+      { status: 410 },
     );
   }
 
@@ -127,37 +125,33 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error:
-          'Invalid or expired 6-digit code. The code refreshes every 30s; try again with the latest one.',
+          "Invalid or expired 6-digit code. The code refreshes every 30s; try again with the latest one.",
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  const bcrypt = await import('bcryptjs');
+  const bcrypt = await import("bcryptjs");
   const passwordHash = await bcrypt.hash(newPassword, 12);
   const secretBlob = encryptSecretForDb(secret);
 
   const { error: upErr } = await supabase
-    .from('admin_users')
+    .from("admin_users")
     .update({
       password_hash: passwordHash,
-      totp_secret_encrypted: `\\x${secretBlob.toString('hex')}`,
+      totp_secret_encrypted: `\\x${secretBlob.toString("hex")}`,
       totp_enrolled: true,
       must_reset_password: false,
       // Clear the pending row so it can't be replayed.
       pending_totp_secret: null,
       pending_totp_secret_expires_at: null,
     })
-    .eq('id', session.sub);
+    .eq("id", session.sub);
   if (upErr) {
-    return NextResponse.json({ error: upErr.message }, { status: 500 });
+    return internalError("Admin TOTP confirmation failed", upErr);
   }
 
   const res = NextResponse.json({ ok: true });
-  await startSession(
-    res,
-    { id: session.sub, email: session.email },
-    'done'
-  );
+  await startSession(res, { id: session.sub, email: session.email }, "done");
   return res;
 }

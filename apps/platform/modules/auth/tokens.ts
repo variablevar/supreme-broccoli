@@ -29,5 +29,5 @@ export function sameOrigin(
   site: string | null,
 ) {
   if (site === "cross-site") return false;
-  return origin === null || origin === expected;
+  return origin === expected;
 }

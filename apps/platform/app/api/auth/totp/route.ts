@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase';
-import { requireCustomer } from '@/lib/customerAuth';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createAdminClient } from "@/lib/supabase";
+import { requireCustomer } from "@/lib/customerAuth";
 import {
   byteaToBuffer,
   decryptSecret,
@@ -10,9 +10,10 @@ import {
   generateFreshSecret,
   PENDING_TOTP_TTL_MS,
   verifyTotp,
-} from '@/lib/customerTotp';
+} from "@/lib/customerTotp";
+import { internalError } from "@/modules/http/errors";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/auth/totp
@@ -29,22 +30,23 @@ export async function GET() {
   if (!guard.ok) return guard.response;
 
   const secret = generateFreshSecret();
-  const enrollment = await enrollmentFromSecret(guard.session.email, secret, true);
+  const enrollment = await enrollmentFromSecret(
+    guard.session.email,
+    secret,
+    true,
+  );
   const expiresAt = new Date(Date.now() + PENDING_TOTP_TTL_MS).toISOString();
 
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from('web_users')
+    .from("web_users")
     .update({
-      pending_totp_secret: `\\x${encryptSecret(secret).toString('hex')}`,
+      pending_totp_secret: `\\x${encryptSecret(secret).toString("hex")}`,
       pending_totp_secret_expires_at: expiresAt,
     })
-    .eq('id', guard.session.sub);
+    .eq("id", guard.session.sub);
   if (error) {
-    return NextResponse.json(
-      { error: `Failed to persist TOTP enrollment: ${error.message}` },
-      { status: 500 }
-    );
+    return internalError("Customer TOTP enrollment write failed", error);
   }
 
   return NextResponse.json({
@@ -72,21 +74,22 @@ export async function POST(req: Request) {
 
   const parsed = postSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
   const { totpCode } = parsed.data;
 
   const supabase = createAdminClient();
   const { data: row, error: selErr } = await supabase
-    .from('web_users')
-    .select('pending_totp_secret, pending_totp_secret_expires_at')
-    .eq('id', guard.session.sub)
+    .from("web_users")
+    .select("pending_totp_secret, pending_totp_secret_expires_at")
+    .eq("id", guard.session.sub)
     .maybeSingle();
-  if (selErr) return NextResponse.json({ error: selErr.message }, { status: 500 });
+  if (selErr)
+    return internalError("Customer TOTP enrollment read failed", selErr);
   if (!row?.pending_totp_secret) {
     return NextResponse.json(
-      { error: 'TOTP enrollment expired. Open the QR again to start over.' },
-      { status: 410 }
+      { error: "TOTP enrollment expired. Open the QR again to start over." },
+      { status: 410 },
     );
   }
   if (
@@ -94,27 +97,30 @@ export async function POST(req: Request) {
     new Date(row.pending_totp_secret_expires_at).getTime() < Date.now()
   ) {
     return NextResponse.json(
-      { error: 'TOTP enrollment expired. Open the QR again to start over.' },
-      { status: 410 }
+      { error: "TOTP enrollment expired. Open the QR again to start over." },
+      { status: 410 },
     );
   }
 
   const blob = byteaToBuffer(row.pending_totp_secret);
   const secret = decryptSecret(blob);
   if (!verifyTotp(secret, totpCode)) {
-    return NextResponse.json({ error: 'Invalid 6-digit code' }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid 6-digit code" },
+      { status: 400 },
+    );
   }
 
   const { error } = await supabase
-    .from('web_users')
+    .from("web_users")
     .update({
-      totp_secret_encrypted: `\\x${encryptSecret(secret).toString('hex')}`,
+      totp_secret_encrypted: `\\x${encryptSecret(secret).toString("hex")}`,
       totp_enrolled: true,
       pending_totp_secret: null,
       pending_totp_secret_expires_at: null,
     })
-    .eq('id', guard.session.sub);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    .eq("id", guard.session.sub);
+  if (error) return internalError("Customer TOTP confirmation failed", error);
 
   return NextResponse.json({ ok: true });
 }
@@ -133,32 +139,38 @@ export async function DELETE(req: Request) {
 
   const parsed = deleteSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from('web_users')
-    .select('password_hash')
-    .eq('id', guard.session.sub)
+    .from("web_users")
+    .select("password_hash")
+    .eq("id", guard.session.sub)
     .maybeSingle();
-  if (!data) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+  if (!data)
+    return NextResponse.json({ error: "Account not found" }, { status: 404 });
 
-  const bcrypt = await import('bcryptjs');
-  if (!(await bcrypt.compare(parsed.data.currentPassword, data.password_hash))) {
-    return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 });
+  const bcrypt = await import("bcryptjs");
+  if (
+    !(await bcrypt.compare(parsed.data.currentPassword, data.password_hash))
+  ) {
+    return NextResponse.json(
+      { error: "Current password is incorrect" },
+      { status: 401 },
+    );
   }
 
   const { error } = await supabase
-    .from('web_users')
+    .from("web_users")
     .update({
       totp_secret_encrypted: null,
       totp_enrolled: false,
       pending_totp_secret: null,
       pending_totp_secret_expires_at: null,
     })
-    .eq('id', guard.session.sub);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    .eq("id", guard.session.sub);
+  if (error) return internalError("Customer TOTP disable failed", error);
 
   return NextResponse.json({ ok: true });
 }

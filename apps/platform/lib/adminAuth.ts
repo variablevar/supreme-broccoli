@@ -65,6 +65,8 @@ export interface LoginAttemptResult {
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_MINUTES = 15;
+const DUMMY_PASSWORD_HASH =
+  "$2b$12$piMtoJ5qmm.07rfjSB5oC.Je2z.eViMwxSHD6jWPii643BXsOsTB2";
 /**
  * Verify a (email, password) pair against an admin_users row and the
  * ADMIN_EMAILS allowlist. On success returns the account. On failure
@@ -85,7 +87,11 @@ export async function verifyPassword(
     .eq("email", normalized)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return { ok: false, reason: "unknown_email" };
+  if (!data) {
+    const bcrypt = await import("bcryptjs");
+    await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+    return { ok: false, reason: "unknown_email" };
+  }
 
   const account = data as unknown as AdminAccount;
 
@@ -111,10 +117,11 @@ export async function verifyPassword(
       nextAttempts >= LOCKOUT_THRESHOLD
         ? new Date(Date.now() + LOCKOUT_MINUTES * 60_000).toISOString()
         : account.locked_until;
-    await supabase
+    const { error: updateError } = await supabase
       .from("admin_users")
       .update({ failed_attempts: nextAttempts, locked_until: lockUntil })
       .eq("id", account.id);
+    if (updateError) throw updateError;
     return {
       ok: false,
       reason: "bad_password",
@@ -122,7 +129,7 @@ export async function verifyPassword(
     };
   }
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("admin_users")
     .update({
       failed_attempts: 0,
@@ -130,6 +137,7 @@ export async function verifyPassword(
       last_login_at: new Date().toISOString(),
     })
     .eq("id", account.id);
+  if (updateError) throw updateError;
 
   return { ok: true, account };
 }

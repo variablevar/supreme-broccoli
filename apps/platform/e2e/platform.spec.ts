@@ -20,11 +20,15 @@ test("real customer, operator and device acceptance journey", async ({
   ).toBeVisible();
   expect(
     (
-      await page.request.post("/api/auth/login", { data: { email, password } })
+      await page.request.post("/api/auth/login", {
+        headers: { Origin: "http://127.0.0.1:3100" },
+        data: { email, password },
+      })
     ).status(),
   ).toBe(401);
   const admin = await playwright.request.newContext({
     baseURL: "http://127.0.0.1:3100",
+    extraHTTPHeaders: { Origin: "http://127.0.0.1:3100" },
   });
   const login = await admin.post("/api/admin/auth/login", {
     data: {
@@ -180,7 +184,10 @@ test("real customer, operator and device acceptance journey", async ({
     .toBe("light");
   const cookies = await page.context().cookies();
   const session = cookies.find((c) => c.name === "imo_customer_session")!;
-  await customer.post("/api/auth/logout", { data: {} });
+  await customer.post("/api/auth/logout", {
+    headers: { Origin: "http://127.0.0.1:3100" },
+    data: {},
+  });
   const replay = await playwright.request.newContext({
     baseURL: "http://127.0.0.1:3100",
     extraHTTPHeaders: { Cookie: `imo_customer_session=${session.value}` },
@@ -201,6 +208,13 @@ test("forged cookies, foreign origins and unknown device credentials fail", asyn
       exp: Date.now() + 3600000,
     }),
   ).toString("base64url");
+  expect(
+    (
+      await request.post("/api/auth/login", {
+        data: {},
+      })
+    ).status(),
+  ).toBe(403);
   expect(
     (
       await request.get("/api/admin/overview", {
@@ -230,6 +244,12 @@ test("landing page retains its sections and uses a text wordmark", async ({
   page,
 }) => {
   await page.goto("/");
+  expect((await page.request.get("/api/health")).status()).toBe(200);
+  const headers = await page.request.get("/");
+  expect(headers.headers()["content-security-policy"]).toContain(
+    "frame-ancestors 'none'",
+  );
+  expect(headers.headers()["x-frame-options"]).toBe("DENY");
   await expect(page.locator("nav").first()).toBeVisible();
   await expect(page.locator("#engines")).toBeVisible();
   await expect(page.locator("#pricing")).toBeVisible();

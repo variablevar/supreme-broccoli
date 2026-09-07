@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase';
-import { requireCustomer } from '@/lib/customerAuth';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createAdminClient } from "@/lib/supabase";
+import { requireCustomer } from "@/lib/customerAuth";
+import { internalError } from "@/modules/http/errors";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const schema = z.object({
   currentPassword: z.string().min(1).max(256),
@@ -21,29 +22,33 @@ export async function POST(req: Request) {
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
   const { currentPassword, newPassword } = parsed.data;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from('web_users')
-    .select('id, password_hash')
-    .eq('id', guard.session.sub)
+    .from("web_users")
+    .select("id, password_hash")
+    .eq("id", guard.session.sub)
     .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+  if (error) return internalError("Customer password read failed", error);
+  if (!data)
+    return NextResponse.json({ error: "Account not found" }, { status: 404 });
 
-  const bcrypt = await import('bcryptjs');
+  const bcrypt = await import("bcryptjs");
   if (!(await bcrypt.compare(currentPassword, data.password_hash))) {
-    return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 });
+    return NextResponse.json(
+      { error: "Current password is incorrect" },
+      { status: 401 },
+    );
   }
   const newHash = await bcrypt.hash(newPassword, 12);
   const { error: updErr } = await supabase
-    .from('web_users')
+    .from("web_users")
     .update({ password_hash: newHash })
-    .eq('id', data.id);
-  if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
+    .eq("id", data.id);
+  if (updErr) return internalError("Customer password update failed", updErr);
 
   return NextResponse.json({ ok: true });
 }

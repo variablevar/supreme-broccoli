@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createAdminClient } from "@/lib/supabase";
 import {
   audit,
   getAdminContext,
   getSession,
   requireAdmin,
-} from '@/lib/adminAuth';
+} from "@/lib/adminAuth";
+import { internalError } from "@/modules/http/errors";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const schema = z.object({
   currentPassword: z.string().min(1).max(256),
@@ -24,42 +25,47 @@ export async function POST(req: Request) {
   const denied = await requireAdmin();
   if (denied) return denied;
   const ctx = await getAdminContext();
-  if (!ctx) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!ctx) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
   const { currentPassword, newPassword } = parsed.data;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from('admin_users')
-    .select('id, password_hash')
-    .eq('id', session.sub)
+    .from("admin_users")
+    .select("id, password_hash")
+    .eq("id", session.sub)
     .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+  if (error) return internalError("Admin password read failed", error);
+  if (!data)
+    return NextResponse.json({ error: "Account not found" }, { status: 404 });
 
-  const bcrypt = await import('bcryptjs');
+  const bcrypt = await import("bcryptjs");
   if (!(await bcrypt.compare(currentPassword, data.password_hash))) {
-    return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 });
+    return NextResponse.json(
+      { error: "Current password is incorrect" },
+      { status: 401 },
+    );
   }
   const newHash = await bcrypt.hash(newPassword, 12);
   const { error: updErr } = await supabase
-    .from('admin_users')
+    .from("admin_users")
     .update({ password_hash: newHash })
-    .eq('id', data.id);
-  if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
+    .eq("id", data.id);
+  if (updErr) return internalError("Admin password update failed", updErr);
 
-  await audit(ctx, 'admin.password.change', {
-    targetTable: 'admin_users',
+  await audit(ctx, "admin.password.change", {
+    targetTable: "admin_users",
     targetId: data.id,
-    ip: req.headers.get('x-forwarded-for'),
-    userAgent: req.headers.get('user-agent'),
+    ip: req.headers.get("x-forwarded-for"),
+    userAgent: req.headers.get("user-agent"),
   });
   return NextResponse.json({ ok: true });
 }

@@ -27,3 +27,17 @@ export const invalid = () =>
     { error: "Invalid request. Check the fields and try again." },
     { status: 400 },
   );
+export function internalError(
+  context: string,
+  error?: { code?: string } | unknown,
+) {
+  const code =
+    typeof error === "object" && error && "code" in error
+      ? String(error.code)
+      : undefined;
+  console.error(context, code ? { code } : undefined);
+  return NextResponse.json(
+    { error: "Service unavailable. Please try again." },
+    { status: 500 },
+  );
+}

@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { sameOrigin } from "@/modules/auth/tokens";
 export function proxy(req: NextRequest) {
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+    const deviceRequest =
+      req.nextUrl.pathname.startsWith("/api/v1/device/") &&
+      /^Bearer [A-Za-z0-9_-]{43}$/.test(req.headers.get("authorization") || "");
     const expected = process.env.APP_ORIGIN || req.nextUrl.origin;
     if (
+      !deviceRequest &&
       !sameOrigin(
         req.headers.get("origin"),
         expected,

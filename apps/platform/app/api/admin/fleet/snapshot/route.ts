@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase';
-import { audit, getAdminContext, requireAdmin } from '@/lib/adminAuth';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createAdminClient } from "@/lib/supabase";
+import { audit, getAdminContext, requireAdmin } from "@/lib/adminAuth";
+import type { NextRequest } from "next/server";
+import { internalError } from "@/modules/http/errors";
 
 const schema = z.object({
   totalGpus: z.number().int().nonnegative(),
@@ -22,13 +23,14 @@ export async function POST(req: NextRequest) {
   const ctx = await getAdminContext();
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 
   const supabase = createAdminClient();
   // Map camelCase input -> snake_case columns (the Supabase client
   // doesn't auto-translate without a configured camelCase option).
   const { data, error } = await supabase
-    .from('fleet_stats')
+    .from("fleet_stats")
     .insert({
       total_gpus: parsed.data.totalGpus,
       active_miners: parsed.data.activeMiners,
@@ -38,14 +40,14 @@ export async function POST(req: NextRequest) {
     })
     .select()
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return internalError("Fleet snapshot write failed", error);
 
-  await audit(ctx, 'fleet.snapshot', {
-    targetTable: 'fleet_stats',
+  await audit(ctx, "fleet.snapshot", {
+    targetTable: "fleet_stats",
     targetId: data.id,
     details: parsed.data,
-    ip: req.headers.get('x-forwarded-for'),
-    userAgent: req.headers.get('user-agent'),
+    ip: req.headers.get("x-forwarded-for"),
+    userAgent: req.headers.get("user-agent"),
   });
   return NextResponse.json(data);
 }

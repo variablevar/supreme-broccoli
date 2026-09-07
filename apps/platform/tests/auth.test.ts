@@ -49,6 +49,7 @@ test("cross-origin browser mutations are rejected", () => {
     false,
   );
   assert.equal(sameOrigin(null, "https://imo.example", "cross-site"), false);
+  assert.equal(sameOrigin(null, "https://imo.example", null), false);
   assert.equal(
     sameOrigin("https://imo.example", "https://imo.example", "same-origin"),
     true,
