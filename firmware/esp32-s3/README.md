@@ -27,11 +27,11 @@ pio device monitor
 The device stores configuration in NVS and reboots. Tokens are never printed. It requires network time for certificate validation; outbound NTP must be available. No HTTP or insecure TLS fallback exists.
 
 5. Enter the six-character code displayed by the device in the signed-in customer dashboard. The code expires after 15 minutes and is refreshed through the device API.
-6. Publish content from admin. The next sync applies it; the following sync acknowledges the version. Publication values are display information, not account balances.
+6. Publish content from admin. The next sync applies it; the following sync acknowledges the version. The landscape display rotates through overview, real network state, operator-published activity, and published revenue pages every five seconds. Publication values are display information, not account balances.
 
 ## Recovery
 
-Loss of network keeps the last cached publication and marks it stale. Retry backoff grows from 15 seconds to two minutes. A rejected credential displays REVOKED and requires operator reprovisioning. To factory-reset over trusted USB, send `{"reset":true}`; this clears server credentials, cached display and Wi-Fi settings.
+Loss of network keeps the last cached publication and marks it stale. The web dashboard marks a missing heartbeat offline after 40 seconds. Retry backoff grows from 15 seconds to two minutes. A rejected credential displays REVOKED and requires operator reprovisioning. To factory-reset over trusted USB, send `{"reset":true}`; this clears server credentials, cached display and Wi-Fi settings.
 
 Cached publications contain no private wallet keys. NVS credentials are not hardware-encrypted by this reference build; production hardware release must decide secure boot, flash encryption and physical access requirements.
 

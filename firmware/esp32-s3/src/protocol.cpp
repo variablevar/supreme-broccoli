@@ -14,6 +14,7 @@ bool applySync(const String& json) {
   if(deserializeJson(doc,json)) return false;
   if(doc["protocolVersion"].as<int>()!=1 || !doc["paired"].is<bool>()) return false;
   const bool paired=doc["paired"].as<bool>();
+  if(doc["deviceId"].is<const char*>()) state.deviceId=doc["deviceId"].as<String>();
   JsonVariantConst publication=doc["publication"];
   if(!publication.isNull()) {
     if(!publication["version"].is<uint32_t>() || publication["version"].as<uint32_t>()==0) return false;
