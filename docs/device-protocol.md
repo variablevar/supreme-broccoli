@@ -11,3 +11,9 @@ Display content includes title, message, activity label/rate and daily/total pub
 Firmware states: provisioning → connecting → unpaired → paired → stale. Revocation returns to an explicit unavailable state. Keep last valid publication on transient failure; never generate mock values. Use bounded HTTP timeouts, reconnect backoff and structured JSON parsing.
 
 Physical release gate: confirm exact ESP32-S3 board, flash/PSRAM and ST7789 wiring. The repository can supply a reference board configuration; it cannot infer actual pin wiring from a previous `esp32dev` build.
+
+## Device publications
+
+Operators can publish a custom state to one device or start from one of the built-in operational presets. The fleet publisher targets selected devices, every active device, currently online devices, or currently offline devices. Group publication is one database transaction and increments each target device's existing version independently.
+
+An offline target does not need an active connection. Its new publication remains in the database and is returned by the next authenticated sync. Revoked devices are excluded from every group target.

@@ -22,6 +22,20 @@ export const publishInput = z
     expectedVersion: z.number().int().min(0).max(2147483646),
   })
   .strict();
+export const bulkPublishInput = z
+  .object({
+    content: displayContent,
+    target: z.enum(["all", "selected", "online", "offline"]),
+    deviceIds: z.array(z.string().uuid()).max(200).default([]),
+  })
+  .strict()
+  .refine(
+    (value) => value.target !== "selected" || value.deviceIds.length > 0,
+    {
+      message: "Select at least one device",
+      path: ["deviceIds"],
+    },
+  );
 export const provisionInput = z
   .object({ name: z.string().trim().min(2).max(80) })
   .strict();

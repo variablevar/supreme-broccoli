@@ -39,6 +39,7 @@ export async function database() {
     "003_devices.sql",
     "005_registration_applications.sql",
     "006_device_presence_window.sql",
+    "007_bulk_device_publications.sql",
   ])
     await db.exec(
       await readFile(

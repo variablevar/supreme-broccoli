@@ -6,7 +6,9 @@ import {
   syncInput,
   displayContent,
   pairingInput,
+  bulkPublishInput,
 } from "../modules/devices/validation";
+import { PUBLICATION_PRESETS } from "../modules/devices/publication-presets";
 const content = {
   title: "Test display",
   message: "Published by operator",
@@ -38,6 +40,56 @@ test("device protocol rejects financial telemetry and unsupported shapes", () =>
   );
   assert.equal(pairingInput.safeParse({ code: "ABC123" }).success, false);
   assert.equal(pairingInput.parse({ code: " abc234 " }).code, "ABC234");
+  assert.equal(PUBLICATION_PRESETS.length, 13);
+  for (const preset of PUBLICATION_PRESETS)
+    assert.ok(displayContent.safeParse(preset.content).success, preset.id);
+  assert.equal(
+    bulkPublishInput.safeParse({ content, target: "selected", deviceIds: [] })
+      .success,
+    false,
+  );
+});
+test("bulk publication targets device presence groups and increments versions", async () => {
+  const db = await database();
+  try {
+    const ids: string[] = [];
+    for (const [uid, hash] of [
+      ["IMO-ONLINE", "bulk-online"],
+      ["IMO-OFFLINE", "bulk-offline"],
+    ]) {
+      const {
+        rows: [{ id }],
+      } = await db.query<{ id: string }>(
+        "select imo.provision_device($1,$1,$2,'admin@example.com') id",
+        [uid, hash],
+      );
+      ids.push(id);
+    }
+    await db.query("select imo.sync_device($1,'1.0',10,-50,0)", [ids[0]]);
+    const first = await db.query<{ result: { publishedCount: number } }>(
+      "select imo.publish_device_group('online',$1,$2,'admin@example.com') result",
+      [[], JSON.stringify(content)],
+    );
+    assert.equal(first.rows[0].result.publishedCount, 1);
+    const second = await db.query<{ result: { publishedCount: number } }>(
+      "select imo.publish_device_group('all',$1,$2,'admin@example.com') result",
+      [[], JSON.stringify({ ...content, activity: "Updated" })],
+    );
+    assert.equal(second.rows[0].result.publishedCount, 2);
+    const publications = await db.query<{ device_id: string; version: number }>(
+      "select device_id,version from imo.device_publications order by device_id",
+    );
+    assert.deepEqual(
+      publications.rows.map((row) => row.version).sort(),
+      [1, 2],
+    );
+    const audit = await db.query<{ count: number }>(
+      "select count(*)::int count from imo.admin_audit_log where action='device.publish.bulk'",
+    );
+    assert.equal(audit.rows[0].count, 3);
+  } finally {
+    await db.close();
+  }
 });
 test("pairing enforces expiry and single ownership; both views use one publication", async () => {
   const db = await database();

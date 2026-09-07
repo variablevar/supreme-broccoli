@@ -2,6 +2,8 @@
 
 Imo connects an operator-managed ESP32-S3 display to its owner's dashboard. Operators publish device information and credit platform accounts. Customers pair devices, save one public withdrawal address, and request withdrawals. Operators pay externally and record the transaction hash.
 
+The operations console includes 13 reusable display presets and transactional group publishing for selected, all active, online, or offline devices. Offline displays apply queued publications when they reconnect.
+
 The existing marketing landing page, language selection, and theme support are retained. Wallet generation, private keys, simulated earnings, and browser payment signing are outside the product.
 
 ## Rebuild status

@@ -17,6 +17,10 @@ import {
 } from "./ui";
 import { DeviceCard } from "./DeviceCard";
 import { Withdrawals } from "./Withdrawals";
+import {
+  EMPTY_PUBLICATION,
+  PUBLICATION_PRESETS,
+} from "@/modules/devices/publication-presets";
 export function OperatorWorkspace({
   section = "overview",
 }: {
@@ -128,6 +132,7 @@ export function OperatorWorkspace({
           {section === "devices" && (
             <>
               <Provision onChange={refresh} />
+              <BulkPublish devices={data.devices} onChange={refresh} />
               {!data.devices.length && (
                 <Empty>Register your first physical display.</Empty>
               )}
@@ -142,8 +147,23 @@ export function OperatorWorkspace({
             </>
           )}
           {section === "registrations" && (
-            <Panel title="Registration applications" description="Approving an application creates its customer login. Rejected applicants may apply again.">
-              {data.applications.length ? <div className="space-y-3">{data.applications.map((application)=><ApplicationRow key={application.id} application={application} onChange={refresh}/>)}</div> : <Empty>No registration applications yet.</Empty>}
+            <Panel
+              title="Registration applications"
+              description="Approving an application creates its customer login. Rejected applicants may apply again."
+            >
+              {data.applications.length ? (
+                <div className="space-y-3">
+                  {data.applications.map((application) => (
+                    <ApplicationRow
+                      key={application.id}
+                      application={application}
+                      onChange={refresh}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Empty>No registration applications yet.</Empty>
+              )}
             </Panel>
           )}
           {["users", "balance"].includes(section) && (
@@ -246,10 +266,72 @@ export function OperatorWorkspace({
     </div>
   );
 }
-function ApplicationRow({application,onChange}:{application:OperatorOverview["applications"][number];onChange:()=>void}){
-  const [busy,setBusy]=useState(false),[reason,setReason]=useState(""),[error,setError]=useState("");
-  async function decide(decision:"approved"|"rejected") { setBusy(true);setError("");try{await request(`/api/admin/registrations/${application.id}/decide`,{decision,reason});onChange();}catch(e){setError(e instanceof Error?e.message:"Review failed");}finally{setBusy(false);} }
-  return <article className="rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p data-no-translate className="font-medium">{application.email}</p><p className="text-xs text-muted-foreground">Applied {new Date(application.created_at).toLocaleString()}</p></div><Status>{application.status}</Status></div>{application.status==="pending"&&<div className="mt-4 flex flex-col gap-2 sm:flex-row"><button disabled={busy} onClick={()=>decide("approved")} className={buttonClass}>Approve user</button><input aria-label="Rejection reason" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Reason for rejection" className={inputClass}/><button disabled={busy||reason.trim().length<3} onClick={()=>decide("rejected")} className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50">Reject</button></div>}<ErrorMessage message={error}/></article>;
+function ApplicationRow({
+  application,
+  onChange,
+}: {
+  application: OperatorOverview["applications"][number];
+  onChange: () => void;
+}) {
+  const [busy, setBusy] = useState(false),
+    [reason, setReason] = useState(""),
+    [error, setError] = useState("");
+  async function decide(decision: "approved" | "rejected") {
+    setBusy(true);
+    setError("");
+    try {
+      await request(`/api/admin/registrations/${application.id}/decide`, {
+        decision,
+        reason,
+      });
+      onChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Review failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <article className="rounded-xl border border-border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p data-no-translate className="font-medium">
+            {application.email}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Applied {new Date(application.created_at).toLocaleString()}
+          </p>
+        </div>
+        <Status>{application.status}</Status>
+      </div>
+      {application.status === "pending" && (
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <button
+            disabled={busy}
+            onClick={() => decide("approved")}
+            className={buttonClass}
+          >
+            Approve user
+          </button>
+          <input
+            aria-label="Rejection reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Reason for rejection"
+            className={inputClass}
+          />
+          <button
+            disabled={busy || reason.trim().length < 3}
+            onClick={() => decide("rejected")}
+            className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50"
+          >
+            Reject
+          </button>
+        </div>
+      )}
+      <ErrorMessage message={error} />
+    </article>
+  );
 }
 function Provision({ onChange }: { onChange: () => void }) {
   const [name, setName] = useState(""),
@@ -333,12 +415,7 @@ function Publish({
 }) {
   const [editing, setEditing] = useState(false),
     [content, setContent] = useState<Publication>({
-      title: "",
-      message: "",
-      activity: "",
-      rate: "",
-      dailyUsdt: "0",
-      totalUsdt: "0",
+      ...EMPTY_PUBLICATION,
     }),
     [version, setVersion] = useState(0),
     [error, setError] = useState(""),
@@ -434,21 +511,66 @@ function Publish({
           )}
           {editing && (
             <form onSubmit={save} className="mt-4 space-y-3">
+              <PresetPicker onSelect={setContent} />
               <PublicationSection title="Page 1 · Overview">
-                <PublicationField label="Node display title" field="title" max={32} required content={content} setContent={setContent} />
-                <p className="text-xs text-muted-foreground">Node ID and uptime come directly from the device.</p>
+                <PublicationField
+                  label="Node display title"
+                  field="title"
+                  max={32}
+                  required
+                  content={content}
+                  setContent={setContent}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Node ID and uptime come directly from the device.
+                </p>
               </PublicationSection>
               <PublicationSection title="Page 2 · Network">
-                <p className="text-xs text-muted-foreground">Wi-Fi connection, signal strength, server sync and uptime are reported by the device and cannot be edited.</p>
+                <p className="text-xs text-muted-foreground">
+                  Wi-Fi connection, signal strength, server sync and uptime are
+                  reported by the device and cannot be edited.
+                </p>
               </PublicationSection>
               <PublicationSection title="Page 3 · Activity">
-                <PublicationField label="Current activity" field="activity" max={24} content={content} setContent={setContent} />
-                <PublicationField label="Rate and unit" field="rate" max={24} content={content} setContent={setContent} />
+                <PublicationField
+                  label="Current activity"
+                  field="activity"
+                  max={24}
+                  content={content}
+                  setContent={setContent}
+                />
+                <PublicationField
+                  label="Rate and unit"
+                  field="rate"
+                  max={24}
+                  content={content}
+                  setContent={setContent}
+                />
               </PublicationSection>
               <PublicationSection title="Page 4 · Revenue">
-                <PublicationField label="Published total USDT" field="totalUsdt" max={16} required content={content} setContent={setContent} />
-                <PublicationField label="Published daily USDT" field="dailyUsdt" max={16} required content={content} setContent={setContent} />
-                <PublicationField label="Revenue message" field="message" max={120} content={content} setContent={setContent} />
+                <PublicationField
+                  label="Published total USDT"
+                  field="totalUsdt"
+                  max={16}
+                  required
+                  content={content}
+                  setContent={setContent}
+                />
+                <PublicationField
+                  label="Published daily USDT"
+                  field="dailyUsdt"
+                  max={16}
+                  required
+                  content={content}
+                  setContent={setContent}
+                />
+                <PublicationField
+                  label="Revenue message"
+                  field="message"
+                  max={120}
+                  content={content}
+                  setContent={setContent}
+                />
               </PublicationSection>
               <p className="text-xs text-muted-foreground">
                 Display text currently supports ASCII. Publishing does not
@@ -474,11 +596,253 @@ function Publish({
     </div>
   );
 }
-function PublicationSection({title,children}:{title:string;children:ReactNode}){
-  return <fieldset className="space-y-3 rounded-lg border border-border p-4"><legend className="px-2 text-sm font-semibold text-primary">{title}</legend>{children}</fieldset>;
+function PresetPicker({
+  onSelect,
+}: {
+  onSelect: (content: Publication) => void;
+}) {
+  return (
+    <Field label="Start from a preset">
+      <select
+        defaultValue=""
+        onChange={(event) => {
+          const preset = PUBLICATION_PRESETS.find(
+            (item) => item.id === event.target.value,
+          );
+          if (preset) onSelect({ ...preset.content });
+        }}
+        className={inputClass}
+      >
+        <option value="" disabled>
+          Choose one of {PUBLICATION_PRESETS.length} presets
+        </option>
+        {PUBLICATION_PRESETS.map((preset) => (
+          <option key={preset.id} value={preset.id}>
+            {preset.name} — {preset.description}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
 }
-function PublicationField({label,field,max,required=false,content,setContent}:{label:string;field:keyof Publication;max:number;required?:boolean;content:Publication;setContent:(content:Publication)=>void}){
-  return <Field label={label}><input required={required} maxLength={max} value={content[field]} onChange={(e)=>setContent({...content,[field]:e.target.value})} className={inputClass}/></Field>;
+function BulkPublish({
+  devices,
+  onChange,
+}: {
+  devices: Device[];
+  onChange: () => void;
+}) {
+  const available = devices.filter((device) => !device.revoked_at);
+  const [target, setTarget] = useState<
+    "all" | "selected" | "online" | "offline"
+  >("selected");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [content, setContent] = useState<Publication>({ ...EMPTY_PUBLICATION });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState("");
+  const targetCount =
+    target === "all"
+      ? available.length
+      : target === "online"
+        ? available.filter((device) => device.online).length
+        : target === "offline"
+          ? available.filter((device) => !device.online).length
+          : selected.filter((id) =>
+              available.some((device) => device.id === id),
+            ).length;
+  async function publish(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setResult("");
+    try {
+      const response = await request<{ publishedCount: number }>(
+        "/api/admin/devices/publications",
+        { target, deviceIds: selected, content },
+        "PUT",
+      );
+      setResult(
+        `Published to ${response.publishedCount} device${response.publishedCount === 1 ? "" : "s"}.`,
+      );
+      onChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Bulk publication failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Panel
+      title="Publish to device group"
+      description="Choose a preset, adjust its display values, and send it to all devices or a live-status group in one operation."
+    >
+      <form onSubmit={publish} className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2">
+          <PresetPicker onSelect={setContent} />
+          <Field label="Target devices">
+            <select
+              value={target}
+              onChange={(event) =>
+                setTarget(event.target.value as typeof target)
+              }
+              className={inputClass}
+            >
+              <option value="selected">Selected devices</option>
+              <option value="all">All active devices</option>
+              <option value="online">Online devices</option>
+              <option value="offline">Offline devices</option>
+            </select>
+          </Field>
+        </div>
+        {target === "selected" && (
+          <fieldset className="rounded-xl border border-border p-4">
+            <legend className="px-2 text-sm font-medium">Select devices</legend>
+            {available.length ? (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {available.map((device) => (
+                  <label
+                    key={device.id}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(device.id)}
+                      onChange={(event) =>
+                        setSelected(
+                          event.target.checked
+                            ? [...selected, device.id]
+                            : selected.filter((id) => id !== device.id),
+                        )
+                      }
+                    />
+                    <span className="min-w-0">
+                      <span
+                        data-no-translate
+                        className="block truncate font-medium"
+                      >
+                        {device.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {device.online ? "Online" : "Offline"}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <Empty>No active devices available.</Empty>
+            )}
+          </fieldset>
+        )}
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          <PublicationField
+            label="Title"
+            field="title"
+            max={32}
+            required
+            content={content}
+            setContent={setContent}
+          />
+          <PublicationField
+            label="Activity"
+            field="activity"
+            max={24}
+            content={content}
+            setContent={setContent}
+          />
+          <PublicationField
+            label="Rate and unit"
+            field="rate"
+            max={24}
+            content={content}
+            setContent={setContent}
+          />
+          <PublicationField
+            label="Daily USDT"
+            field="dailyUsdt"
+            max={16}
+            required
+            content={content}
+            setContent={setContent}
+          />
+          <PublicationField
+            label="Total USDT"
+            field="totalUsdt"
+            max={16}
+            required
+            content={content}
+            setContent={setContent}
+          />
+          <PublicationField
+            label="Message"
+            field="message"
+            max={120}
+            content={content}
+            setContent={setContent}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Offline devices receive the publication on their next successful sync.
+          Publishing display values does not change customer balances.
+        </p>
+        <button disabled={busy || targetCount === 0} className={buttonClass}>
+          {busy
+            ? "Publishing…"
+            : `Publish to ${targetCount} device${targetCount === 1 ? "" : "s"}`}
+        </button>
+        {result && (
+          <p role="status" className="text-sm text-primary">
+            {result}
+          </p>
+        )}
+        <ErrorMessage message={error} />
+      </form>
+    </Panel>
+  );
+}
+function PublicationSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <fieldset className="space-y-3 rounded-lg border border-border p-4">
+      <legend className="px-2 text-sm font-semibold text-primary">
+        {title}
+      </legend>
+      {children}
+    </fieldset>
+  );
+}
+function PublicationField({
+  label,
+  field,
+  max,
+  required = false,
+  content,
+  setContent,
+}: {
+  label: string;
+  field: keyof Publication;
+  max: number;
+  required?: boolean;
+  content: Publication;
+  setContent: (content: Publication) => void;
+}) {
+  return (
+    <Field label={label}>
+      <input
+        required={required}
+        maxLength={max}
+        value={content[field]}
+        onChange={(e) => setContent({ ...content, [field]: e.target.value })}
+        className={inputClass}
+      />
+    </Field>
+  );
 }
 function Adjust({
   users,
