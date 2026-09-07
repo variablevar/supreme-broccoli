@@ -24,6 +24,9 @@ const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application
 async function post(path, body) {
   const response = await fetch(baseUrl + path, { method: 'POST', headers, body: JSON.stringify(body) });
   const result = await response.json().catch(() => ({}));
+  if (response.status === 401 && result.error === 'Device unavailable') {
+    throw new Error('NODE_KEY does not belong to an active device. Provision a new node in /admin/devices, copy its one-time credential into NODE_KEY, and run the simulator again.');
+  }
   if (!response.ok) throw new Error(`${path} returned ${response.status}: ${result.error || 'request failed'}`);
   return result;
 }
