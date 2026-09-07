@@ -26,6 +26,14 @@ To test a provisioned node without hardware, save its one-time credential as `NO
 pnpm --filter @imo/platform simulate:device
 ```
 
+You can pass the one-time credential directly instead:
+
+```bash
+pnpm --filter @imo/platform simulate:device -- <device-credential>
+# or from apps/platform:
+node scripts/simulate-device.mjs <device-credential>
+```
+
 Enter the printed pairing code on the customer Devices page. Keep the command running while an operator publishes display content; the simulator reports heartbeats, prints the returned publication, and acknowledges its version on the following sync.
 
 Use the disposable integration stack for database and browser tests:

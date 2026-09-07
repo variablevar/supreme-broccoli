@@ -15,9 +15,10 @@ async function loadEnvironment() {
 }
 
 const env = await loadEnvironment();
-const token = env.NODE_KEY;
+const tokenArgument = process.argv.find((argument, index) => index > 1 && argument !== '--');
+const token = tokenArgument?.startsWith('--key=') ? tokenArgument.slice(6) : tokenArgument || env.NODE_KEY;
 const baseUrl = (env.DEVICE_API_URL || env.APP_ORIGIN || 'http://localhost:3001').replace(/\/$/, '');
-if (!token) throw new Error('Set NODE_KEY in apps/platform/.env.local or the process environment.');
+if (!token) throw new Error('Pass the device credential as an argument or set NODE_KEY in apps/platform/.env.local.');
 if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) throw new Error('DEVICE_API_URL must be an HTTP(S) origin.');
 
 const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
