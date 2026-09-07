@@ -11,7 +11,7 @@ export function Footer() {
             <BrandLogo size={48} />
           </div>
           <p className="text-foreground/50 text-sm max-w-sm">
-            Dedicated monitor nodes connected to GPU compute, AI workloads, exchange trading and USDT settlement.
+            Dedicated monitor nodes connected to GPU compute, quant workloads, reward distribution and USDT settlement.
           </p>
         </div>
 

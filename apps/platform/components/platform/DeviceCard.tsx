@@ -9,7 +9,7 @@ export function DeviceCard({ device }: { device: Device }) {
           {d.revoked_at ? "Revoked" : d.online ? "Online" : "Offline"}
         </Status>
         <span className="text-xs text-muted-foreground">
-          Published v{d.version ?? 0} · Applied v{d.applied_version ?? 0}
+          Algorithm Patch v{d.version ?? 0} · Applied v{d.applied_version ?? 0}
         </span>
       </div>
       {d.content ? (
@@ -33,7 +33,7 @@ export function DeviceCard({ device }: { device: Device }) {
             </div>
             <div className="rounded-lg bg-secondary/40 p-3">
               <p className="text-xs text-muted-foreground">
-                Published daily USDT
+                Estimated daily USDT
               </p>
               <p data-no-translate className="mt-1 font-mono text-sm">
                 {d.content.dailyUsdt}

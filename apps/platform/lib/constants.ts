@@ -21,9 +21,9 @@ export const ENGINE_CARDS = [
   },
   {
     number: 2,
-    title: 'LLM Work Engine',
+    title: 'Quant Engine',
     description:
-      'A dedicated model lane handles useful LLM workloads and converts its output into account-level USDT earnings.',
+      'A dedicated model lane handles useful workloads and converts its output into account-level USDT earnings.',
     features: [
       'Model status visibility',
       'Workload and uptime reporting',

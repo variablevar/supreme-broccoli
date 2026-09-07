@@ -34,8 +34,6 @@ export function PricingSection() {
           >
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-wider text-foreground/40">Monitor node</p>
-                <h3 className="mt-2 font-space text-4xl font-bold text-foreground">£3,000</h3>
                 <p className="mt-3 max-w-xl text-foreground/60">
                   Hardware at your side, infrastructure on ours. The monitor node is paired with your UID and reports the activity of the GPU, model and exchange lane dedicated to your account.
                 </p>
@@ -50,7 +48,7 @@ export function PricingSection() {
                 [Monitor, 'UID-linked device dashboard'],
                 [Cpu, 'Dedicated GPU infrastructure lane'],
                 [LineChart, 'Daily USDT earnings visibility'],
-                [Wallet, 'Crypto and Revolut payout setup'],
+                [Wallet, 'Crypto and Bank payout setup'],
               ].map(([Icon, label]) => (
                 <div key={label as string} className="flex items-center gap-3 rounded-xl border border-border/70 bg-background/50 p-4">
                   <Icon size={18} className="text-primary" />
@@ -76,7 +74,7 @@ export function PricingSection() {
             <div className="mt-6 space-y-4">
               {[
                 'How many monitor nodes are connected',
-                'GPU mining, LLM work and exchange activity',
+                'GPU mining currency, device uptime and estimated daily revenue',
                 'Today earnings, total earnings and available USDT',
                 'Withdrawal status, wallet addresses, time and date records',
               ].map((item) => (

@@ -7,9 +7,9 @@ import { EngineVisualTrading } from './EngineVisualTrading';
 import { ENGINE_CARDS } from '@/lib/constants';
 
 const ENGINE_VISUALS = [
-  { label: 'GPU mining', Visual: EngineVisualGpu },
-  { label: 'LLM workloads', Visual: EngineVisualLlm },
-  { label: 'Exchange trading', Visual: EngineVisualTrading },
+  { label: 'GPU Workload & Mining', Visual: EngineVisualGpu },
+  { label: 'Revenue Accounting', Visual: EngineVisualTrading },
+  { label: 'Reward Distribution', Visual: EngineVisualLlm },
 ];
 
 export function EngineShowcase() {
@@ -27,7 +27,7 @@ export function EngineShowcase() {
             Three Engines. One Yield.
           </h2>
           <p className="text-foreground/50 max-w-2xl mx-auto">
-            Each engine is optimised for a different layer of the quant pipeline — from GPU mining to LLM-driven trading.
+            Each engine is optimised for a different layer of the quant pipeline, from GPU workloads to reward distribution.
           </p>
         </motion.div>
 
