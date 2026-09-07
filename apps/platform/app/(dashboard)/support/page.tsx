@@ -25,9 +25,12 @@ export default function DashboardContactPage() {
             For UID-linked device issues, withdrawal status or wallet questions, include your account UID when you
             reach out.
           </p>
-          <div className="rounded-xl border border-dashed border-border/60 bg-background/40 px-4 py-3 text-sm text-foreground/50">
-            Contact email coming soon
-          </div>
+          <a
+            href="mailto:support@imnoshi.com"
+            className="block rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            support@imnoshi.com
+          </a>
         </GlassCard>
 
         <GlassCard>
@@ -40,9 +43,12 @@ export default function DashboardContactPage() {
           <p className="text-foreground/60 mb-4 leading-relaxed">
             Questions about an existing order, invoice or an additional monitor node.
           </p>
-          <div className="rounded-xl border border-dashed border-border/60 bg-background/40 px-4 py-3 text-sm text-foreground/50">
-            Contact email coming soon
-          </div>
+          <a
+            href="mailto:support@imnoshi.com"
+            className="block rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            support@imnoshi.com
+          </a>
         </GlassCard>
       </div>
 
@@ -68,7 +74,7 @@ export default function DashboardContactPage() {
           </li>
         </ul>
         <p className="mt-6 text-xs text-foreground/40">
-          A dedicated contact address is being finalised and will appear here shortly.
+          Email <a href="mailto:support@imnoshi.com" className="text-primary hover:underline">support@imnoshi.com</a> and our team will follow up.
         </p>
       </GlassCard>
     </div>

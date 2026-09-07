@@ -32,9 +32,12 @@ export default function ContactPage() {
             <p className="text-foreground/60 mb-4 leading-relaxed">
               For monitor node orders, GPU infrastructure questions and partnership enquiries.
             </p>
-            <div className="rounded-xl border border-dashed border-border/60 bg-background/40 px-4 py-3 text-sm text-foreground/50">
-              Contact email coming soon
-            </div>
+            <a
+              href="mailto:support@imnoshi.com"
+              className="block rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              support@imnoshi.com
+            </a>
           </GlassCard>
 
           <GlassCard>
@@ -47,9 +50,12 @@ export default function ContactPage() {
             <p className="text-foreground/60 mb-4 leading-relaxed">
               Already have a device? Sign in for UID-linked support, or reach the account team directly.
             </p>
-            <div className="rounded-xl border border-dashed border-border/60 bg-background/40 px-4 py-3 text-sm text-foreground/50">
-              Contact email coming soon
-            </div>
+            <a
+              href="mailto:support@imnoshi.com"
+              className="block rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              support@imnoshi.com
+            </a>
           </GlassCard>
         </div>
 
@@ -75,7 +81,7 @@ export default function ContactPage() {
             </li>
           </ul>
           <p className="mt-6 text-xs text-foreground/40">
-            A dedicated contact address is being finalised and will appear on this page shortly.
+            Email <a href="mailto:support@imnoshi.com" className="text-primary hover:underline">support@imnoshi.com</a> and our team will follow up.
           </p>
         </GlassCard>
       </div>
