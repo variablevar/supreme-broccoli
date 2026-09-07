@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import type {
   Device,
   OperatorOverview,
@@ -434,28 +434,22 @@ function Publish({
           )}
           {editing && (
             <form onSubmit={save} className="mt-4 space-y-3">
-              {(
-                [
-                  ["title", "Display title", 32],
-                  ["message", "Message", 120],
-                  ["activity", "Activity", 24],
-                  ["rate", "Rate / unit", 24],
-                  ["dailyUsdt", "Published daily USDT", 16],
-                  ["totalUsdt", "Published total USDT", 16],
-                ] as const
-              ).map(([key, label, max]) => (
-                <Field key={key} label={label}>
-                  <input
-                    required={["title", "dailyUsdt", "totalUsdt"].includes(key)}
-                    maxLength={max}
-                    value={content[key]}
-                    onChange={(e) =>
-                      setContent({ ...content, [key]: e.target.value })
-                    }
-                    className={inputClass}
-                  />
-                </Field>
-              ))}
+              <PublicationSection title="Page 1 · Overview">
+                <PublicationField label="Node display title" field="title" max={32} required content={content} setContent={setContent} />
+                <p className="text-xs text-muted-foreground">Node ID and uptime come directly from the device.</p>
+              </PublicationSection>
+              <PublicationSection title="Page 2 · Network">
+                <p className="text-xs text-muted-foreground">Wi-Fi connection, signal strength, server sync and uptime are reported by the device and cannot be edited.</p>
+              </PublicationSection>
+              <PublicationSection title="Page 3 · Activity">
+                <PublicationField label="Current activity" field="activity" max={24} content={content} setContent={setContent} />
+                <PublicationField label="Rate and unit" field="rate" max={24} content={content} setContent={setContent} />
+              </PublicationSection>
+              <PublicationSection title="Page 4 · Revenue">
+                <PublicationField label="Published total USDT" field="totalUsdt" max={16} required content={content} setContent={setContent} />
+                <PublicationField label="Published daily USDT" field="dailyUsdt" max={16} required content={content} setContent={setContent} />
+                <PublicationField label="Revenue message" field="message" max={120} content={content} setContent={setContent} />
+              </PublicationSection>
               <p className="text-xs text-muted-foreground">
                 Display text currently supports ASCII. Publishing does not
                 change account balances.
@@ -479,6 +473,12 @@ function Publish({
       <ErrorMessage message={error} />
     </div>
   );
+}
+function PublicationSection({title,children}:{title:string;children:ReactNode}){
+  return <fieldset className="space-y-3 rounded-lg border border-border p-4"><legend className="px-2 text-sm font-semibold text-primary">{title}</legend>{children}</fieldset>;
+}
+function PublicationField({label,field,max,required=false,content,setContent}:{label:string;field:keyof Publication;max:number;required?:boolean;content:Publication;setContent:(content:Publication)=>void}){
+  return <Field label={label}><input required={required} maxLength={max} value={content[field]} onChange={(e)=>setContent({...content,[field]:e.target.value})} className={inputClass}/></Field>;
 }
 function Adjust({
   users,
