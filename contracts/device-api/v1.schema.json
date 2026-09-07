@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://imo.example/contracts/device-api/v1.schema.json",
+  "title": "Imo device sync protocol v1",
+  "type": "object",
+  "$defs": {
+    "syncRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocolVersion", "firmware", "uptimeSeconds", "wifiRssi", "appliedVersion"],
+      "properties": {
+        "protocolVersion": { "const": 1 },
+        "firmware": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "uptimeSeconds": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "wifiRssi": { "type": "integer", "minimum": -120, "maximum": 0 },
+        "appliedVersion": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+      }
+    },
+    "displayContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "message", "activity", "rate", "dailyUsdt", "totalUsdt"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "message": { "type": "string", "maxLength": 120 },
+        "activity": { "type": "string", "maxLength": 24 },
+        "rate": { "type": "string", "maxLength": 24 },
+        "dailyUsdt": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,6})?$" },
+        "totalUsdt": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,6})?$" }
+      }
+    }
+  }
+}

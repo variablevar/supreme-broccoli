@@ -2,6 +2,9 @@
 const nextConfig = {
   // Dev uses the default .next; production builds go to dist so the two never clash.
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  // The Next 16 CLI checker loses captured stdout under this Node runtime.
+  // Use the supported compiler API; the separate typecheck script still runs tsc.
+  experimental: { useTypeScriptCli: false },
   images: {
     formats: ['image/avif', 'image/webp'],
   },

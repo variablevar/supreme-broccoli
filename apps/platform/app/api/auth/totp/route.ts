@@ -145,7 +145,7 @@ export async function DELETE(req: Request) {
   if (!data) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
 
   const bcrypt = await import('bcryptjs');
-  if (!bcrypt.compareSync(parsed.data.currentPassword, data.password_hash)) {
+  if (!(await bcrypt.compare(parsed.data.currentPassword, data.password_hash))) {
     return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 });
   }
 

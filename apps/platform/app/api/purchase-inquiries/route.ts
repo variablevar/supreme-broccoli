@@ -1,17 +1,23 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
 import { z } from 'zod';
+import { allowAttempt } from '@/modules/auth/rate-limit';
+import { dbError, invalid } from '@/modules/http/errors';
 
 const schema = z.object({
   name: z.string().min(2).max(120),
   email: z.string().email().max(160),
-  phone: z.string().max(80).optional(),
+  phone: z.string().trim().max(80).optional(),
   quantity: z.number().int().min(1).max(20),
 });
 
 export async function POST(req: Request) {
-  const parsed = schema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid purchase request' }, { status: 400 });
+  const source = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!(await allowAttempt(`purchase:${source}`, 5, 3600))) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+  const parsed = schema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return invalid();
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -27,6 +33,6 @@ export async function POST(req: Request) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return dbError(error);
   return NextResponse.json(data);
 }

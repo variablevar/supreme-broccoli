@@ -1,71 +1,13 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import crypto from 'crypto';
-import { createAdminClient } from '@/lib/supabase';
-import { ensureDbUser } from '@/lib/userId';
 import { requireCustomer } from '@/lib/customerAuth';
-
-const schema = z.object({
-  code: z.string().length(6).regex(/^[A-Z2-9]{6}$/),
-});
-
-function hashToken(token: string): string {
-  return crypto.createHash('sha256').update(token).digest('hex');
-}
-
-/**
- * Customer redeems a pairing code. The matching row in
- * device_pairings already has the device_id and user_id; we update
- * status='claimed' and replace the admin-issued claim token (if
- * any) with a freshly-minted one. The customer surfaces the new
- * claim token as a QR code on the next page so their device can
- * complete pairing via scan.
- */
-export async function POST(req: Request) {
-  const guard = await requireCustomer();
-  if (!guard.ok) return guard.response;
-
-  const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid code' }, { status: 400 });
-
-  const supabase = createAdminClient();
-  const dbUser = await ensureDbUser(supabase, guard.session.email);
-
-  const { data: pairing, error } = await supabase
-    .from('device_pairings')
-    .select('code, status, device_id, user_id, created_at')
-    .eq('code', parsed.data.code.toUpperCase())
-    .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!pairing) return NextResponse.json({ error: 'Code not found' }, { status: 404 });
-  if (pairing.status !== 'pending') {
-    return NextResponse.json({ error: `Code already ${pairing.status}` }, { status: 409 });
-  }
-  if (Date.now() - new Date(pairing.created_at).getTime() > 15 * 60 * 1000) {
-    await supabase
-      .from('device_pairings')
-      .update({ status: 'revoked' })
-      .eq('code', parsed.data.code);
-    return NextResponse.json({ error: 'Code expired -- ask the admin for a new one' }, { status: 410 });
-  }
-  if (pairing.user_id !== dbUser.id) {
-    return NextResponse.json({ error: 'Code is not assigned to your account' }, { status: 403 });
-  }
-
-  const newClaimToken = crypto.randomBytes(24).toString('base64url');
-
-  const { error: upErr } = await supabase
-    .from('device_pairings')
-    .update({
-      status: 'claimed',
-      claim_token: hashToken(newClaimToken),
-      claimed_at: new Date().toISOString(),
-    })
-    .eq('code', parsed.data.code);
-  if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
-
-  return NextResponse.json({
-    deviceId: pairing.device_id,
-    claimToken: newClaimToken,
-  });
+import { createAdminClient } from '@/lib/supabase';
+import { pairingInput } from '@/modules/devices/validation';
+import { allowAttempt } from '@/modules/auth/rate-limit';
+import { dbError, invalid } from '@/modules/http/errors';
+export async function POST(req:Request) {
+  const guard=await requireCustomer(); if(!guard.ok) return guard.response;
+  if(!await allowAttempt('pair:'+guard.session.userId,5)) return NextResponse.json({error:'Too many attempts. Try again later.'},{status:429});
+  const parsed=pairingInput.safeParse(await req.json().catch(()=>null));if(!parsed.success)return invalid();
+  const {data,error}=await createAdminClient().rpc('claim_device',{p_code:parsed.data.code,p_user_id:guard.session.userId});
+  return error?dbError(error):NextResponse.json(data);
 }

@@ -1,0 +1,27 @@
+# Disposable local integration stack. Credentials are intentionally test-only.
+name: imo-integration
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: imo_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: imo_test_only
+    ports:
+      - '127.0.0.1:55432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d imo_test']
+      interval: 2s
+      retries: 20
+  rest:
+    image: postgrest/postgrest:v13.0.7
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:imo_test_only@db:5432/imo_test
+      PGRST_DB_SCHEMAS: imo
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: imo-local-integration-only-secret-at-least-32-bytes
+    ports:
+      - '127.0.0.1:55433:3000'

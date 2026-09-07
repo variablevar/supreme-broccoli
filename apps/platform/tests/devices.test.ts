@@ -1,0 +1,207 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { database } from "./database";
+import {
+  syncInput,
+  displayContent,
+  pairingInput,
+} from "../modules/devices/validation";
+const content = {
+  title: "Test display",
+  message: "Published by operator",
+  activity: "Compute",
+  rate: "42 jobs",
+  dailyUsdt: "1.250000",
+  totalUsdt: "12.500000",
+};
+test("device protocol rejects financial telemetry and unsupported shapes", () => {
+  const heartbeat = {
+    protocolVersion: 1,
+    firmware: "1.0.0",
+    uptimeSeconds: 50,
+    wifiRssi: -60,
+    appliedVersion: 0,
+  };
+  assert.ok(syncInput.safeParse(heartbeat).success);
+  assert.equal(
+    syncInput.safeParse({ ...heartbeat, todayUsdt: 100 }).success,
+    false,
+  );
+  assert.equal(
+    syncInput.safeParse({ ...heartbeat, protocolVersion: 2 }).success,
+    false,
+  );
+  assert.equal(
+    displayContent.safeParse({ ...content, message: "x".repeat(121) }).success,
+    false,
+  );
+  assert.equal(pairingInput.safeParse({ code: "ABC123" }).success, false);
+  assert.equal(pairingInput.parse({ code: " abc234 " }).code, "ABC234");
+});
+test("pairing enforces expiry and single ownership; both views use one publication", async () => {
+  const db = await database();
+  try {
+    const user = randomUUID(),
+      other = randomUUID();
+    await db.query(
+      "insert into imo.users(id,uid,email) values ($1,'IMO-A','a@example.com'),($2,'IMO-B','b@example.com')",
+      [user, other],
+    );
+    const {
+      rows: [{ id }],
+    } = await db.query<{ id: string }>(
+      "select imo.provision_device('IMO-DEVICE','Office device','hashed-secret','admin@example.com') id",
+    );
+    await db.query("select imo.issue_pairing($1,'ABC234')", [id]);
+    await db.query("select imo.claim_device('ABC234',$1)", [user]);
+    await db.query("select imo.claim_device('ABC234',$1)", [user]);
+    await assert.rejects(
+      db.query("select imo.claim_device('ABC234',$1)", [other]),
+      /already claimed/,
+    );
+    await db.query("select imo.publish_device($1,$2,0,'admin@example.com')", [
+      id,
+      JSON.stringify(content),
+    ]);
+    await assert.rejects(
+      db.query("select imo.publish_device($1,$2,0,'admin@example.com')", [
+        id,
+        JSON.stringify(content),
+      ]),
+      /changed/,
+    );
+    const {
+      rows: [{ sync }],
+    } = await db.query<{
+      sync: {
+        paired: boolean;
+        publication: { version: number; content: unknown };
+      };
+    }>("select imo.sync_device($1,'1.0',10,-50,1) sync", [id]);
+    assert.equal(sync.paired, true);
+    assert.equal(sync.publication.version, 1);
+    assert.deepEqual(sync.publication.content, content);
+    const {
+      rows: [{ account }],
+    } = await db.query<{
+      account: {
+        devices: {
+          content: unknown;
+          online: boolean;
+          applied_version: number;
+        }[];
+        balance: string;
+      };
+    }>("select imo.customer_account($1) account", [user]);
+    assert.equal(account.devices.length, 1);
+    assert.deepEqual(account.devices[0].content, sync.publication.content);
+    assert.equal(account.devices[0].online, true);
+    assert.equal(account.devices[0].applied_version, 1);
+    assert.equal(account.balance, "0.000000");
+    const {
+      rows: [{ account: isolated }],
+    } = await db.query<{ account: { devices: unknown[] } }>(
+      "select imo.customer_account($1) account",
+      [other],
+    );
+    assert.equal(isolated.devices.length, 0);
+    await db.query("select imo.revoke_device($1,'admin@example.com')", [id]);
+    await assert.rejects(
+      db.query("select imo.sync_device($1,'1.0',10,-50,1)", [id]),
+      /unavailable/,
+    );
+    const {
+      rows: [{ id: expired }],
+    } = await db.query<{ id: string }>(
+      "select imo.provision_device('IMO-EXPIRED','Expired','another-hash','admin@example.com') id",
+    );
+    await db.query("select imo.issue_pairing($1,'XYZ789')", [expired]);
+    await db.query(
+      "update imo.device_pairings set expires_at=now()-interval '1 second' where code='XYZ789'",
+    );
+    await assert.rejects(
+      db.query("select imo.claim_device('XYZ789',$1)", [user]),
+      /expired/,
+    );
+  } finally {
+    await db.close();
+  }
+});
+test("concurrent requests cannot overspend or claim the same hardware", async () => {
+  const db = await database();
+  try {
+    const user = randomUUID(),
+      other = randomUUID();
+    await db.query(
+      "insert into imo.users(id,uid,email) values ($1,'IMO-C','c@example.com'),($2,'IMO-D','d@example.com')",
+      [user, other],
+    );
+    await db.query(
+      "insert into imo.withdrawal_addresses(user_id,address) values ($1,$2)",
+      [user, "0x" + "a".repeat(40)],
+    );
+    await db.query(
+      "select imo.adjust_balance($1,100,'Opening','admin@example.com',$2)",
+      [user, randomUUID()],
+    );
+    const results = await Promise.allSettled([
+      db.query("select imo.request_withdrawal($1,80,$2)", [user, randomUUID()]),
+      db.query("select imo.request_withdrawal($1,80,$2)", [user, randomUUID()]),
+    ]);
+    assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
+    const {
+      rows: [{ id }],
+    } = await db.query<{ id: string }>(
+      "select imo.provision_device('IMO-RACE','Race device','race-hash','admin@example.com') id",
+    );
+    await db.query("select imo.issue_pairing($1,'RAC234')", [id]);
+    const claims = await Promise.allSettled([
+      db.query("select imo.claim_device('RAC234',$1)", [user]),
+      db.query("select imo.claim_device('RAC234',$1)", [other]),
+    ]);
+    assert.equal(claims.filter((r) => r.status === "fulfilled").length, 1);
+  } finally {
+    await db.close();
+  }
+});
+test("password changes invalidate sessions and registration is atomic", async () => {
+  const db = await database();
+  try {
+    const {
+      rows: [{ a }],
+    } = await db.query<{ a: { id: string; user_id: string } }>(
+      "select imo.register_customer('new@example.com','hash','IMO-NEW') a",
+    );
+    await db.query(
+      "update imo.web_users set password_hash='new-hash' where id=$1",
+      [a.id],
+    );
+    const {
+      rows: [row],
+    } = await db.query<{ session_version: number }>(
+      "select session_version from imo.web_users where id=$1",
+      [a.id],
+    );
+    assert.equal(row.session_version, 2);
+    await assert.rejects(
+      db.query(
+        "select imo.register_customer('new@example.com','hash','IMO-OTHER')",
+      ),
+    );
+    const {
+      rows: [count],
+    } = await db.query<{ n: number }>("select count(*)::int n from imo.users");
+    assert.equal(count.n, 1);
+    const limits = await Promise.all(
+      Array.from({ length: 8 }, () =>
+        db.query<{ allowed: boolean }>(
+          "select imo.take_rate_limit('test',5,60) allowed",
+        ),
+      ),
+    );
+    assert.equal(limits.filter((r) => r.rows[0].allowed).length, 5);
+  } finally {
+    await db.close();
+  }
+});

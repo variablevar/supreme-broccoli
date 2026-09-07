@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 const schema = z.object({
   currentPassword: z.string().min(1).max(256),
-  newPassword: z.string().min(10).max(256),
+  newPassword: z.string().min(12).max(72),
 });
 
 /**
@@ -45,10 +45,10 @@ export async function POST(req: Request) {
   if (!data) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
 
   const bcrypt = await import('bcryptjs');
-  if (!bcrypt.compareSync(currentPassword, data.password_hash)) {
+  if (!(await bcrypt.compare(currentPassword, data.password_hash))) {
     return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 });
   }
-  const newHash = bcrypt.hashSync(newPassword, 10);
+  const newHash = await bcrypt.hash(newPassword, 12);
   const { error: updErr } = await supabase
     .from('admin_users')
     .update({ password_hash: newHash })

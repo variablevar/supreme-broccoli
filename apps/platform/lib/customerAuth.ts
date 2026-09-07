@@ -1,9 +1,6 @@
 import { readSession, issueSession, clearSession } from '@/modules/auth/sessions';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase';
-
-const SESSION_COOKIE = 'imnoshi_customer_session';
 
 export interface CustomerSession {
   /** web_users.id (auth row). */
@@ -17,7 +14,7 @@ export interface CustomerSession {
    *   - 'done' = fully signed in
    *
    *  Customers don't have a 'reset' stage because the chosen UX is
-   *  "demo passwords work forever, TOTP optional via Settings later".
+   *  "customers may enroll optional TOTP from Settings".
    */
   stage: 'totp' | 'done';
   iat: number;
@@ -45,7 +42,7 @@ export interface LoginAttemptResult {
   ok: boolean;
   reason?: 'unknown_email' | 'locked' | 'bad_password' | 'no_app_user';
   account?: WebUserRow;
-  appUser?: { id: string; email: string; uid: string; vip_status: boolean | null } | null;
+  appUser?: { id: string; email: string; uid: string } | null;
 }
 
 const LOCKOUT_THRESHOLD = 5;
@@ -69,7 +66,7 @@ export async function verifyPassword(email: string, password: string): Promise<L
   }
 
   const bcrypt = await import('bcryptjs');
-  const passwordOk = bcrypt.compareSync(password, account.password_hash);
+  const passwordOk = await bcrypt.compare(password, account.password_hash);
   if (!passwordOk) {
     const nextAttempts = (account.failed_attempts ?? 0) + 1;
     const lockUntil =
@@ -91,7 +88,7 @@ export async function verifyPassword(email: string, password: string): Promise<L
   // Look up the app-level users row (the one that holds wallet_address, balance, etc.).
   const { data: appUser } = await supabase
     .from('users')
-    .select('id, email, uid, vip_status')
+    .select('id, email, uid')
     .eq('email', normalized)
     .maybeSingle();
 

@@ -7,18 +7,6 @@ export const NAV_LINKS = [
   { label: 'Dashboard', href: '/dashboard' },
 ];
 
-export const DASHBOARD_NAV = [
-  { label: 'Overview', href: '/dashboard', icon: 'LayoutDashboard' },
-  { label: 'Devices', href: '/devices', icon: 'Cpu' },
-  { label: 'Pair Device', href: '/devices/pair', icon: 'Link' },
-  { label: 'Wallets', href: '/wallet', icon: 'Wallet' },
-  { label: 'Earnings', href: '/rewards', icon: 'Gift' },
-  { label: 'Withdrawals', href: '/withdrawals', icon: 'ArrowDownLeft' },
-  { label: 'Transactions', href: '/transactions', icon: 'Receipt' },
-  { label: 'Settings', href: '/settings', icon: 'Settings' },
-  { label: 'Contact', href: '/support', icon: 'Mail' },
-];
-
 export const ENGINE_CARDS = [
   {
     number: 1,

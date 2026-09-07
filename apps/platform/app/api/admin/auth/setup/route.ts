@@ -66,7 +66,7 @@ export async function GET() {
 }
 
 const postSchema = z.object({
-  newPassword: z.string().min(10).max(256),
+  newPassword: z.string().min(12).max(72),
   totpCode: z.string().min(6).max(6),
 });
 
@@ -134,14 +134,14 @@ export async function POST(req: Request) {
   }
 
   const bcrypt = await import('bcryptjs');
-  const passwordHash = bcrypt.hashSync(newPassword, 10);
+  const passwordHash = await bcrypt.hash(newPassword, 12);
   const secretBlob = encryptSecretForDb(secret);
 
   const { error: upErr } = await supabase
     .from('admin_users')
     .update({
       password_hash: passwordHash,
-      totp_secret_encrypted: secretBlob,
+      totp_secret_encrypted: `\\x${secretBlob.toString('hex')}`,
       totp_enrolled: true,
       must_reset_password: false,
       // Clear the pending row so it can't be replayed.
