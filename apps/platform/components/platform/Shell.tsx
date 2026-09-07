@@ -16,6 +16,7 @@ import {
   Landmark,
   ShieldAlert,
   MessagesSquare,
+  ShoppingCart,
 } from "lucide-react";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ const admin = [
   ["/admin/users", "Users", Users],
   ["/admin/registrations", "User applications", UserCheck],
   ["/admin/inquiries", "Enquiries", MessagesSquare],
+  ["/admin/purchases", "Purchase requests", ShoppingCart],
   ["/admin/withdrawals", "Withdrawals", ArrowUpRight],
   ["/admin/balance", "Balance", Landmark],
   ["/admin/audit", "Audit Log", ScrollText],

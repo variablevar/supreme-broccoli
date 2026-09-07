@@ -114,7 +114,11 @@ export interface OperatorOverview {
     id: string;
     name: string;
     email: string;
+    phone: string;
     quantity: number;
-    status: string;
+    device_price_gbp: number;
+    status: "new" | "contacted" | "closed";
+    created_at: string;
+    updated_at: string;
   }[];
 }

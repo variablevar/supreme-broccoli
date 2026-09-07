@@ -51,7 +51,26 @@ test("real customer, operator and device acceptance journey", async ({
       })
     ).ok(),
   ).toBeTruthy();
+  await page.goto("/purchase");
+  await page.getByLabel("Full name").fill("Purchase Test");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Phone").fill("+44 20 0000 0000");
+  await page.getByLabel("Quantity").fill("2");
+  await page.getByRole("button", { name: "Submit Purchase Request" }).click();
+  await expect(page.getByText("Request received", { exact: true })).toBeVisible();
   const overview = await (await admin.get("/api/admin/overview")).json();
+  const purchase = overview.inquiries.find(
+    (item: { email: string }) => item.email === email,
+  );
+  expect(purchase).toBeTruthy();
+  expect(purchase.quantity).toBe(2);
+  expect(
+    (
+      await admin.post(`/api/admin/purchase-inquiries/${purchase.id}`, {
+        data: { status: "contacted" },
+      })
+    ).ok(),
+  ).toBeTruthy();
   expect(
     overview.login_security.some(
       (event: { attempted_email: string; outcome: string }) =>

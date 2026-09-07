@@ -10,6 +10,8 @@ Registration applications accept only `@imnoshi.com` addresses, enforced in both
 
 The public contact endpoint validates a strict request shape, caps every text field and the overall request size, includes a bot-trap field, and applies independent per-IP and per-email rate limits. It returns only an acknowledgement. Contact records have no browser-role database grants; admins access them through authenticated server routes, and status changes create immutable audit events.
 
+The public purchase endpoint uses the same strict request validation, bot trap, bounded fields, per-IP and per-email limits, and acknowledgement-only response. Purchase records remain behind the service role, and operator status changes are constrained and audited in the database transaction.
+
 Failed customer and operator authentication attempts are written to the append-only login security log. Records include the attempted email, authentication stage/outcome, sanitized IP and provider-supplied country/region headers, user agent, and time. Attempted passwords and TOTP values are never stored. Geographic fields are trustworthy only when the deployment proxy removes client-supplied forwarding headers and supplies its own verified values.
 
 Unsafe browser requests must carry the exact `APP_ORIGIN`. Missing and cross-origin requests are rejected. Device endpoints are exempt only when the request path is under `/api/v1/device/` and carries a correctly shaped bearer credential; the credential is then hash-matched against a non-revoked device.

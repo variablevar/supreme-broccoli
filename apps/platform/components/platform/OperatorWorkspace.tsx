@@ -39,6 +39,7 @@ export function OperatorWorkspace({
       audit: "Audit trail",
       registrations: "User applications",
       inquiries: "General enquiries",
+      purchases: "Purchase requests",
       security: "Login security",
     } as Record<string, string>
   )[section];
@@ -181,6 +182,22 @@ export function OperatorWorkspace({
                 </div>
               ) : (
                 <Empty>No general enquiries yet.</Empty>
+              )}
+            </Panel>
+          )}
+          {section === "purchases" && (
+            <Panel
+              title="Monitor node requests"
+              description="Requests submitted through the public purchase form. Contact the requester, then update the processing status."
+            >
+              {data.inquiries.length ? (
+                <div className="space-y-4">
+                  {data.inquiries.map((inquiry) => (
+                    <PurchaseInquiryRow key={inquiry.id} inquiry={inquiry} onChange={refresh} />
+                  ))}
+                </div>
+              ) : (
+                <Empty>No purchase requests yet.</Empty>
               )}
             </Panel>
           )}
@@ -341,6 +358,54 @@ export function OperatorWorkspace({
         </>
       )}
     </div>
+  );
+}
+function PurchaseInquiryRow({
+  inquiry,
+  onChange,
+}: {
+  inquiry: OperatorOverview["inquiries"][number];
+  onChange: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function setStatus(status: "new" | "contacted" | "closed") {
+    setBusy(true);
+    setError("");
+    try {
+      await request(`/api/admin/purchase-inquiries/${inquiry.id}`, { status });
+      onChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not update purchase request");
+    } finally {
+      setBusy(false);
+    }
+  }
+  const subject = `Your IMNOSHI monitor node request`;
+  return (
+    <article className="rounded-xl border border-border p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 data-no-translate className="font-medium">{inquiry.name}</h3>
+          <p data-no-translate className="mt-1 text-sm text-muted-foreground">{inquiry.email}{inquiry.phone ? ` · ${inquiry.phone}` : ""}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Requested {inquiry.quantity} {inquiry.quantity === 1 ? "device" : "devices"} · {new Date(inquiry.created_at).toLocaleString()}</p>
+        </div>
+        <Status>{inquiry.status}</Status>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <a href={`mailto:${inquiry.email}?subject=${encodeURIComponent(subject)}`} className={buttonClass}>Contact requester</a>
+        {inquiry.status !== "contacted" && (
+          <button disabled={busy} onClick={() => setStatus("contacted")} className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50">Mark contacted</button>
+        )}
+        {inquiry.status !== "closed" && (
+          <button disabled={busy} onClick={() => setStatus("closed")} className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50">Close request</button>
+        )}
+        {inquiry.status !== "new" && (
+          <button disabled={busy} onClick={() => setStatus("new")} className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50">Reopen</button>
+        )}
+      </div>
+      <ErrorMessage message={error} />
+    </article>
   );
 }
 function ContactInquiryRow({

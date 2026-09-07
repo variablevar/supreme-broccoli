@@ -24,6 +24,7 @@ export function PurchaseForm() {
       email: String(form.get('email') ?? ''),
       phone: String(form.get('phone') ?? ''),
       quantity: Number(form.get('quantity') ?? 1),
+      company: String(form.get('company') ?? ''),
     };
 
     try {
@@ -32,7 +33,8 @@ export function PurchaseForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Could not submit purchase request');
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.error || 'Could not submit purchase request');
       setSubmitted(true);
       toast.success('Purchase request received');
     } catch (err) {
@@ -93,24 +95,28 @@ export function PurchaseForm() {
               <form onSubmit={submit} className="space-y-5">
                 <div>
                   <h2 className="font-space text-2xl font-semibold">Reserve a monitor node</h2>
-                  <p className="mt-2 text-sm text-muted-foreground">Device price: £3,000 each.</p>
                 </div>
 
                 <div>
                   <Label htmlFor="name">Full name</Label>
-                  <Input id="name" name="name" required className="mt-2" />
+                  <Input id="name" name="name" minLength={2} maxLength={120} autoComplete="name" required className="mt-2" />
                 </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" required className="mt-2" />
+                  <Input id="email" name="email" type="email" maxLength={160} autoComplete="email" required className="mt-2" />
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" name="phone" className="mt-2" />
+                  <Input id="phone" name="phone" type="tel" maxLength={80} autoComplete="tel" className="mt-2" />
                 </div>
                 <div>
                   <Label htmlFor="quantity">Quantity</Label>
-                  <Input id="quantity" name="quantity" type="number" min={1} defaultValue={1} className="mt-2" />
+                  <Input id="quantity" name="quantity" type="number" min={1} max={20} defaultValue={1} required className="mt-2" />
+                </div>
+
+                <div className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+                  <Label htmlFor="purchase-company">Company website</Label>
+                  <Input id="purchase-company" name="company" tabIndex={-1} autoComplete="off" />
                 </div>
 
                 <Button type="submit" disabled={saving} className="w-full py-6">
