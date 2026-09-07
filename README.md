@@ -19,6 +19,7 @@ The production foundation is implemented and verified locally. See [progress](PR
 - [Local development](docs/local-development.md)
 - [Testing](TESTING.md)
 - [Deployment and operations](docs/deployment.md)
+- [Security model and release requirements](docs/security.md)
 - [Implementation plan](docs/plan.md)
 
 ## Target layout

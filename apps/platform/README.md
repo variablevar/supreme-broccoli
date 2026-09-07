@@ -1,60 +1,25 @@
-# IMNOSHI — Monitor Node Engine
+# Imo platform
 
-GPU-powered monitor node dashboard for UID-linked devices, USDT earnings, withdrawals, and multi-chain wallets.
+This is the single Next.js application for the marketing site, customer dashboard, operator console, and authenticated ESP32-S3 API. The source of truth for architecture and setup is the repository [README](../../README.md) and [local development guide](../../docs/local-development.md).
 
-## Stack
-
-Next.js 14 (App Router) · TypeScript · Tailwind + shadcn/ui · Framer Motion / GSAP · React Three Fiber · Zustand · bcryptjs + otplib (self-hosted email + password + optional TOTP) · Supabase (Postgres) · Recharts
-
-## Local development
+## Commands
 
 ```bash
-cp .env.example .env.local   # fill in Supabase + CUSTOMER_TOTP_ENC_KEY
-npm install
-npm run dev                  # http://localhost:3000
+pnpm dev
+pnpm test
+pnpm typecheck
+pnpm lint
+pnpm build
+pnpm test:e2e
+pnpm check:production
 ```
 
-## Database
+Run commands from this directory, or use `pnpm --filter @imo/platform <command>` from the repository root. Browser integration tests require the disposable stack described in [TESTING.md](../../TESTING.md).
 
-Apply, in order, in the Supabase SQL editor:
+## Security model
 
-1. `supabase/schema.sql`
-2. `supabase/migrations/20260903021700_user_language_theme_preferences.sql`
-3. `supabase/migrations/20260907093000_operational_hardening.sql`
-4. `supabase/migrations/20260907093001_operational_hardening_part2.sql`
-5. `supabase/migrations/20260907093002_device_commands.sql`
-6. `supabase/migrations/20260907093003_rate_counter_function.sql`
-7. `supabase/migrations/20260907093004_device_state_overrides.sql`
-8. `supabase/migrations/20260907110000_web_schema_remaining.sql`
-9. `supabase/migrations/20260907120000_web_user_auth.sql`
-10. `supabase/seed.sql` — demo customers + wallet/withdrawal/fleet seed data
+Browser clients never receive the Supabase service-role credential. Customer and operator sessions are opaque, hashed in PostgreSQL, audience-bound, expiring, and invalidated by password or TOTP changes. Operator access requires a database account, TOTP enrollment, and the deployment allowlist when configured. Device credentials are random bearer secrets stored as SHA-256 hashes; firmware requires HTTPS and a provisioned root CA.
 
-Seven demo customers on `@imnoshi.com` are seeded as part of `seed.sql`. Each uses the password `<FirstName>-2026!` (e.g. `alex.carter@imnoshi.com` / `Carter-2026!`). See the root README for the full table. `priya.sharma@imnoshi.com` is pre-enrolled for TOTP so you can exercise the `/login/verify` step on a fresh install. New registrations get their own email + password (≥10 chars). TOTP enrollment is optional and done from `/settings`.
+All application tables use RLS and grant access only to the backend service role. Financial changes use append-only ledger records and transactional database functions. Unsafe browser mutations require the canonical `Origin`; authenticated device routes use bearer credentials instead.
 
-## Deploying to Vercel
-
-1. Push this repo to GitHub and import it in Vercel (framework preset: Next.js — no config needed).
-2. Add all `.env.example` variables in Vercel → Project → Environment Variables. Set `CUSTOMER_TOTP_ENC_KEY` to a 32+ character random string.
-3. Update `NEXT_PUBLIC_APP_URL` to your domain.
-4. Deploy. Supabase needs no changes (it's already remote).
-
-## Fleet stats (marketing ticker)
-
-The landing-page ticker reads the latest row of `fleet_stats` via `GET /api/fleet`. Update it from your ops tooling:
-
-```bash
-curl -X POST https://your-domain/api/fleet \
-  -H "Authorization: Bearer $FLEET_ADMIN_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"total_gpus":1240,"active_miners":856,"total_hashrate":4200,"daily_rewards":12480}'
-```
-
-## Earnings
-
-Customer earnings are recorded in USDT from mining, LLM work, exchange activity,
-and trading. Users can settle pending earnings into their dashboard balance.
-
-## Withdrawal rules
-
-Withdrawals have a 100 USDT minimum and are available once every 7 days.
-Users can pay out to saved crypto wallets or Revolut bank details.
+See [security](../../docs/security.md) and [deployment](../../docs/deployment.md) before release. No demo accounts, universal passwords, wallet private keys, or seed balances belong in a production installation.

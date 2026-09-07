@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit --incremental false",
     "bootstrap:admin": "node scripts/create-admin.mjs",
     "simulate:device": "node scripts/simulate-device.mjs",
+    "check:production": "node scripts/check-production.mjs",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test"
   },
