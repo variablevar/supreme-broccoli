@@ -1,9 +1,9 @@
 export const APP_NAME = 'IMNOSHI';
 
 export const NAV_LINKS = [
-  { label: 'Engines', href: '#engines' },
-  { label: 'Monitor Node', href: '#pricing' },
-  { label: 'Stats', href: '#stats' },
+  { label: 'Engines', href: '/#engines' },
+  { label: 'Monitor Node', href: '/#pricing' },
+  { label: 'Stats', href: '/#stats' },
   { label: 'Dashboard', href: '/dashboard' },
 ];
 

@@ -19,7 +19,7 @@ export function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.filter((l) => !l.href.startsWith('/')).map((link) => (
+          {NAV_LINKS.filter((l) => l.href.includes('#')).map((link) => (
             <a
               key={link.label}
               href={link.href}
@@ -58,7 +58,7 @@ export function Navbar() {
 
       {mobileOpen && (
         <div className="md:hidden glass-strong border-t border-border/10 px-6 py-4 space-y-4">
-          {NAV_LINKS.filter((l) => !l.href.startsWith('/')).map((link) => (
+          {NAV_LINKS.filter((l) => l.href.includes('#')).map((link) => (
             <a
               key={link.label}
               href={link.href}
