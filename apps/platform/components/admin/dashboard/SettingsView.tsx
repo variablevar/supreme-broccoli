@@ -16,6 +16,7 @@ interface Props {
   lastLoginAt: string | null;
   failedAttempts: number;
   lockedUntil: string | null;
+  isLocked: boolean;
 }
 
 export function SettingsView({
@@ -25,6 +26,7 @@ export function SettingsView({
   lastLoginAt,
   failedAttempts,
   lockedUntil,
+  isLocked,
 }: Props) {
   const router = useRouter();
 
@@ -36,8 +38,8 @@ export function SettingsView({
 
   async function changePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (newPassword.length < 10) {
-      toast.error('New password must be at least 10 characters');
+    if (newPassword.length < 12) {
+      toast.error('New password must be at least 12 characters');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -56,7 +58,9 @@ export function SettingsView({
         toast.error((j.error as string) ?? 'Failed to update password');
         return;
       }
-      toast.success('Password updated');
+      toast.success('Password updated. Sign in again.');
+      router.replace('/admin/login');
+      router.refresh();
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -95,7 +99,7 @@ export function SettingsView({
         </Stat>
       </div>
 
-      {lockedUntil && new Date(lockedUntil).getTime() > Date.now() && (
+      {isLocked && lockedUntil && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
           Account locked until {new Date(lockedUntil).toLocaleString()}. Contact another admin to unlock.
         </div>
@@ -124,7 +128,7 @@ export function SettingsView({
             id="newPassword"
             type="password"
             autoComplete="new-password"
-            minLength={10}
+            minLength={12} maxLength={72}
             required
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -137,7 +141,7 @@ export function SettingsView({
             id="confirmPassword"
             type="password"
             autoComplete="new-password"
-            minLength={10}
+            minLength={12} maxLength={72}
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

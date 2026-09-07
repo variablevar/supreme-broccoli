@@ -57,6 +57,7 @@ export default async function SettingsPage() {
             lastLoginAt={account.last_login_at}
             failedAttempts={account.failed_attempts}
             lockedUntil={account.locked_until}
+            isLocked={Boolean(account.locked_until)}
           />
         </CardContent>
       </Card>

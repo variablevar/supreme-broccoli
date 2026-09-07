@@ -41,8 +41,8 @@ export function SetupForm({ email }: Props) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (newPassword.length < 10) {
-      toast.error('Password must be at least 10 characters');
+    if (newPassword.length < 12) {
+      toast.error('Password must be at least 12 characters');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -90,7 +90,7 @@ export function SetupForm({ email }: Props) {
           type="password"
           autoComplete="new-password"
           required
-          minLength={10}
+          minLength={12} maxLength={72}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           disabled={busy}
@@ -103,7 +103,7 @@ export function SetupForm({ email }: Props) {
           type="password"
           autoComplete="new-password"
           required
-          minLength={10}
+          minLength={12} maxLength={72}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           disabled={busy}

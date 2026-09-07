@@ -29,26 +29,7 @@ export function LoginForm() {
       });
       const data = await res.json().catch(() => ({} as Record<string, unknown>));
       if (!res.ok) {
-        if (data?.reason === 'locked') {
-          toast.error('Account locked. Try again in 15 minutes.');
-        } else if (data?.reason === 'bad_password') {
-          // The server returns a more specific hint for this case.
-          toast.error(
-            (data.error as string) ||
-              'Wrong password. For seeded demo accounts the password is your password.'
-          );
-        } else if (data?.reason === 'unknown_email') {
-          toast.error(
-            (data.error as string) ||
-              'No account found. Sign in with your @imnoshi.com email (not your UID).'
-          );
-        } else if (data?.reason === 'no_app_user') {
-          toast.error('Account exists but has no profile row yet. Contact support.');
-        } else if (data?.reason === 'table_missing') {
-          toast.error('web_users table missing. Apply migration 20260907120000.');
-        } else {
-          toast.error((data?.error as string) ?? 'Sign-in failed');
-        }
+        toast.error((data?.error as string) ?? 'Sign-in failed');
         return;
       }
       const stage = data.stage as 'totp' | 'done';
@@ -94,25 +75,6 @@ export function LoginForm() {
       <Button type="submit" className="w-full" disabled={busy}>
         {busy ? 'Signing in…' : 'Sign in'}
       </Button>
-      <details className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-        <summary className="cursor-pointer select-none font-medium text-foreground">
-          Seeded demo accounts
-        </summary>
-        <p className="mt-2">
-          Sign in with your <span className="font-mono">@imnoshi.com</span> email,
-          not the UID. Seeded passwords follow{' '}
-          <span className="font-mono">&lt;FirstName&gt;-2026!</span>.
-        </p>
-        <ul className="mt-2 space-y-0.5 font-mono">
-          <li>alex.carter@imnoshi.com / Carter-2026!</li>
-          <li>priya.sharma@imnoshi.com / Sharma-2026! <span className="text-amber-600">(2FA enrolled)</span></li>
-          <li>marcus.tan@imnoshi.com / Tan-2026!</li>
-          <li>elena.rossi@imnoshi.com / Rossi-2026!</li>
-          <li>yuki.tanaka@imnoshi.com / Tanaka-2026!</li>
-          <li>aisha.mensah@imnoshi.com / Mensah-2026!</li>
-          <li>diego.alvarez@imnoshi.com / Alvarez-2026!</li>
-        </ul>
-      </details>
       <p className="text-center text-sm text-muted-foreground pt-2">
         New here?{' '}
         <Link href="/register" className="text-primary hover:underline">

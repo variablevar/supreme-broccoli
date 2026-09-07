@@ -62,15 +62,6 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    text-transform: uppercase;
-  }
-
-  button,
-  input,
-  select,
-  textarea,
-  optgroup {
-    text-transform: uppercase;
   }
 }
 

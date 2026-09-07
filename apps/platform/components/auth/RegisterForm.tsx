@@ -21,8 +21,8 @@ export function RegisterForm() {
       toast.error('Email and password are required');
       return;
     }
-    if (password.length < 10) {
-      toast.error('Password must be at least 10 characters');
+    if (password.length < 12) {
+      toast.error('Password must be at least 12 characters');
       return;
     }
     if (password !== confirm) {
@@ -72,7 +72,7 @@ export function RegisterForm() {
           type="password"
           autoComplete="new-password"
           required
-          minLength={10}
+          minLength={12} maxLength={72}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={busy}
@@ -85,7 +85,7 @@ export function RegisterForm() {
           type="password"
           autoComplete="new-password"
           required
-          minLength={10}
+          minLength={12} maxLength={72}
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           disabled={busy}
