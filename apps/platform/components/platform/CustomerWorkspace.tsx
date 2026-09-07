@@ -15,6 +15,7 @@ import { DeviceCard } from "./DeviceCard";
 import { Withdrawals } from "./Withdrawals";
 import { Preferences } from "./Preferences";
 import { Security } from "./Security";
+import { BalanceFlowChart, yearToDateRevenue } from "./BalanceFlowChart";
 const titles: Record<string, [string, string]> = {
   overview: ["Your workspace", "A clear view of your devices and account."],
   devices: [
@@ -82,11 +83,13 @@ export function CustomerWorkspace({
       {data && (
         <>
           {["overview", "withdrawals"].includes(section) && (
-            <div className="grid gap-4 sm:grid-cols-3">
+            <>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 ["Available to withdraw", data.available],
                 ["Reserved", data.reserved],
                 ["Account balance", data.balance],
+                ["Year to date revenue", yearToDateRevenue(data.ledger, data.asOf)],
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -103,6 +106,8 @@ export function CustomerWorkspace({
                 </div>
               ))}
             </div>
+            <BalanceFlowChart ledger={data.ledger} asOf={data.asOf} />
+            </>
           )}
           {["overview", "devices"].includes(section) && (
             <>

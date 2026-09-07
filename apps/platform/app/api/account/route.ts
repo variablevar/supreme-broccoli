@@ -5,5 +5,5 @@ import { dbError } from '@/modules/http/errors';
 export async function GET() {
   const guard=await requireCustomer(); if(!guard.ok) return guard.response;
   const {data,error}=await createAdminClient().rpc('customer_account',{p_user_id:guard.session.userId});
-  return error ? dbError(error) : data ? NextResponse.json(data) : NextResponse.json({error:'Account not found'},{status:404});
+  return error ? dbError(error) : data ? NextResponse.json({...data,asOf:new Date().toISOString()}) : NextResponse.json({error:'Account not found'},{status:404});
 }

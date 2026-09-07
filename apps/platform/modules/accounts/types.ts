@@ -47,6 +47,7 @@ export interface Profile {
   theme: ThemePreference;
 }
 export interface Account {
+  asOf: string;
   profile: Profile;
   balance: string;
   reserved: string;
