@@ -15,9 +15,9 @@ export default async function RegisterPage() {
         <Card>
           <CardHeader className="text-center">
             <BrandLogo size={96} showWordmark={false} priority className="mx-auto mb-4 justify-center" />
-            <CardTitle className="font-space text-2xl">Create account</CardTitle>
+            <CardTitle className="font-space text-2xl">Apply for registration</CardTitle>
             <CardDescription>
-              Join <LiveBrand className="text-sm align-baseline" /> and start earning yield.
+              Submit your details for review by the Imo team.
             </CardDescription>
           </CardHeader>
           <CardContent>

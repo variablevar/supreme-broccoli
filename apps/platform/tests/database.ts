@@ -10,6 +10,7 @@ export async function database() {
     );
   const pool = url ? new Pool({ connectionString: url, max: 5 }) : null;
   const memory = pool ? null : new PGlite();
+  if (memory) await memory.exec("create role anon; create role authenticated; create role service_role;");
   const schema = "imo_test_" + randomUUID().replaceAll("-", "");
   const sql = (q: string) => q.replace(/\bimo\b/g, schema);
   const db = {
@@ -36,6 +37,7 @@ export async function database() {
     "001_identity.sql",
     "002_accounts.sql",
     "003_devices.sql",
+    "005_registration_applications.sql",
   ])
     await db.exec(
       await readFile(

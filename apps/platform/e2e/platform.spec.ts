@@ -13,16 +13,10 @@ test("real customer, operator and device acceptance journey", async ({
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByLabel("Confirm password", { exact: true }).fill(password);
   await page
-    .getByRole("button", { name: "Create account", exact: true })
+    .getByRole("button", { name: "Apply for access", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(
-    page.getByText("No devices paired yet.", { exact: false }),
-  ).toBeVisible();
-  const customer = page.request;
-  expect((await customer.get("/api/admin/overview")).status()).toBe(401);
-  const account = await (await customer.get("/api/account")).json();
-  expect(account.balance).toBe("0.000000");
+  await expect(page.getByText("Application received", { exact: true })).toBeVisible();
+  expect((await page.request.post("/api/auth/login", { data: { email, password } })).status()).toBe(401);
   const admin = await playwright.request.newContext({
     baseURL: "http://127.0.0.1:3100",
   });
@@ -45,6 +39,20 @@ test("real customer, operator and device acceptance journey", async ({
       })
     ).ok(),
   ).toBeTruthy();
+  const overview = await (await admin.get("/api/admin/overview")).json();
+  const application = overview.applications.find((item: { email: string }) => item.email === email);
+  expect(application).toBeTruthy();
+  expect((await admin.post(`/api/admin/registrations/${application.id}/decide`, { data: { decision: "approved" } })).ok()).toBeTruthy();
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByText("No devices paired yet.", { exact: false })).toBeVisible();
+  const customer = page.request;
+  expect((await customer.get("/api/admin/overview")).status()).toBe(401);
+  const account = await (await customer.get("/api/account")).json();
+  expect(account.balance).toBe("0.000000");
   const adjustment = await admin.post("/api/admin/balance/adjust", {
     data: {
       userId: account.profile.id,

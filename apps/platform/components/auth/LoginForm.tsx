@@ -76,9 +76,9 @@ export function LoginForm() {
         {busy ? 'Signing in…' : 'Sign in'}
       </Button>
       <p className="text-center text-sm text-muted-foreground pt-2">
-        New here?{' '}
+        Need access?{' '}
         <Link href="/register" className="text-primary hover:underline">
-          Create an account
+          Apply for registration
         </Link>
       </p>
     </form>

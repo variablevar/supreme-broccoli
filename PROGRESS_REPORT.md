@@ -28,6 +28,10 @@ Added random device credentials stored as hashes, expiring single-use pairing co
 
 Eleven isolated SQL/domain tests pass. Seven real PostgreSQL concurrency and invariant tests pass. The production Next.js webpack build and ESP32-S3 PlatformIO build pass. Browser coverage exercises authentication, operator crediting and publication, device pairing/sync, withdrawal request and payment, forged cookies, origin enforcement, and the retained landing page.
 
+## Step 7 — approved customer onboarding
+
+Customer registration creates a pending application without a session or usable account. Operators review applications from a dedicated console sidebar page. Approval atomically creates the customer login; rejection records a reason and permits reapplication. Password hashes never appear in the operator response.
+
 ## Remaining release gates
 
 Flash and inspect the actual ESP32-S3/ST7789 hardware, confirm the project-specific pins and CA certificate, complete staging acceptance behind HTTPS, and rehearse database backup restoration and monitoring alerts. Repository verification cannot certify those external systems.

@@ -3,6 +3,7 @@
 ## Entities
 
 - Auth accounts and profiles: password/TOTP identity, profile UID, language/theme. Server-validated sessions link to immutable IDs.
+- Registration applications: email, bcrypt password hash, review status, reviewer, timestamp and optional rejection reason. Pending rows are not accounts and cannot authenticate.
 - Devices: unique hardware UID, credential hash, optional owner, revoked flag.
 - Pairing codes: device, unique code, expiry and claim status. Claim is atomic.
 - Published state: device, versioned content, operator and timestamp.
@@ -27,3 +28,5 @@ Store the withdrawal destination on the request. Editing the saved address never
 ## Database evolution
 
 Maintain one ordered migration path. Legacy schemas are reference material, not the new installation procedure. Production migrations never include demo wipes. Financial and pairing functions are executable only by the trusted backend database role.
+
+Application approval locks the pending row and creates the profile and login atomically. The operator projection never returns the password hash. Rejected applicants may submit a fresh application.

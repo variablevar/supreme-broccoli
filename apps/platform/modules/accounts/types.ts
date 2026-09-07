@@ -57,6 +57,7 @@ export interface Account {
   ledger: LedgerEntry[];
 }
 export interface OperatorOverview {
+  applications: { id:string; email:string; status:'pending'|'approved'|'rejected'; created_at:string; reviewed_by:string|null; reviewed_at:string|null; rejection_reason:string|null }[];
   users: {
     id: string;
     email: string;

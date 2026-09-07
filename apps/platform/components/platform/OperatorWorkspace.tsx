@@ -33,6 +33,7 @@ export function OperatorWorkspace({
       withdrawals: "Withdrawal queue",
       balance: "Account adjustments",
       audit: "Audit trail",
+      registrations: "User applications",
     } as Record<string, string>
   )[section];
   return (
@@ -140,6 +141,11 @@ export function OperatorWorkspace({
               </div>
             </>
           )}
+          {section === "registrations" && (
+            <Panel title="Registration applications" description="Approving an application creates its customer login. Rejected applicants may apply again.">
+              {data.applications.length ? <div className="space-y-3">{data.applications.map((application)=><ApplicationRow key={application.id} application={application} onChange={refresh}/>)}</div> : <Empty>No registration applications yet.</Empty>}
+            </Panel>
+          )}
           {["users", "balance"].includes(section) && (
             <>
               <Panel
@@ -239,6 +245,11 @@ export function OperatorWorkspace({
       )}
     </div>
   );
+}
+function ApplicationRow({application,onChange}:{application:OperatorOverview["applications"][number];onChange:()=>void}){
+  const [busy,setBusy]=useState(false),[reason,setReason]=useState(""),[error,setError]=useState("");
+  async function decide(decision:"approved"|"rejected") { setBusy(true);setError("");try{await request(`/api/admin/registrations/${application.id}/decide`,{decision,reason});onChange();}catch(e){setError(e instanceof Error?e.message:"Review failed");}finally{setBusy(false);} }
+  return <article className="rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p data-no-translate className="font-medium">{application.email}</p><p className="text-xs text-muted-foreground">Applied {new Date(application.created_at).toLocaleString()}</p></div><Status>{application.status}</Status></div>{application.status==="pending"&&<div className="mt-4 flex flex-col gap-2 sm:flex-row"><button disabled={busy} onClick={()=>decide("approved")} className={buttonClass}>Approve user</button><input aria-label="Rejection reason" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Reason for rejection" className={inputClass}/><button disabled={busy||reason.trim().length<3} onClick={()=>decide("rejected")} className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50">Reject</button></div>}<ErrorMessage message={error}/></article>;
 }
 function Provision({ onChange }: { onChange: () => void }) {
   const [name, setName] = useState(""),

@@ -2,9 +2,9 @@
 
 ## People and responsibilities
 
-Customer: register/sign in, retain language/theme preferences, pair a physical device, view its published data and connection health, save one public withdrawal address, request a withdrawal, and view history.
+Customer: apply for access, sign in after operator approval, retain language/theme preferences, pair a physical device, view its published data and connection health, save one public withdrawal address, request a withdrawal, and view history.
 
-Operator: sign in with password and TOTP, register/provision devices, publish display state, credit/debit customer accounts with a reason, approve/reject withdrawals, record externally executed payments, and inspect an audit trail.
+Operator: sign in with password and TOTP, approve/reject customer applications, register/provision devices, publish display state, credit/debit customer accounts with a reason, approve/reject withdrawals, record externally executed payments, and inspect an audit trail.
 
 Device: securely authenticate, show a short-lived pairing code, receive published state, report heartbeat and applied version, retain its last good display during outages with a visible stale indication.
 
@@ -21,7 +21,7 @@ Device: securely authenticate, show a short-lived pairing code, receive publishe
 
 ## Acceptance journey
 
-1. A fresh customer starts with zero balance and zero devices.
+1. An applicant cannot sign in until an operator approves the application; the approved customer starts with zero balance and zero devices.
 2. Operator provisions a unique device identity/secret and credits the customer.
 3. Device obtains a pairing code. Customer redeems it exactly once.
 4. Operator publishes state. Customer sees it, device applies the same version, operator sees acknowledgement.

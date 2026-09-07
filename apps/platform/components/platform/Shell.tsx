@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   Users,
+  UserCheck,
   ScrollText,
   Landmark,
 } from "lucide-react";
@@ -30,6 +31,7 @@ const admin = [
   ["/admin", "Overview", LayoutDashboard],
   ["/admin/devices", "Devices", Cpu],
   ["/admin/users", "Users", Users],
+  ["/admin/registrations", "User applications", UserCheck],
   ["/admin/withdrawals", "Withdrawals", ArrowUpRight],
   ["/admin/balance", "Balance", Landmark],
   ["/admin/audit", "Audit Log", ScrollText],

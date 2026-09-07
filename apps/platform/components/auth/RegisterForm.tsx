@@ -2,18 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export function RegisterForm() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,9 +40,7 @@ export function RegisterForm() {
         toast.error((data?.error as string) ?? 'Registration failed');
         return;
       }
-      toast.success('Account created. Welcome!');
-      router.replace('/dashboard');
-      router.refresh();
+      setSubmitted(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -51,6 +48,7 @@ export function RegisterForm() {
     }
   }
 
+  if (submitted) return <div role="status" className="space-y-4 text-center"><h2 className="font-space text-xl font-semibold">Application received</h2><p className="text-sm text-muted-foreground">We will review your details and get back to you. You cannot sign in until an operator approves your application.</p><Link href="/login" className="inline-block text-primary hover:underline">Return to login</Link></div>;
   return (
     <form onSubmit={submit} className="space-y-4">
       <div className="space-y-1.5">
@@ -92,7 +90,7 @@ export function RegisterForm() {
         />
       </div>
       <Button type="submit" className="w-full" disabled={busy}>
-        {busy ? 'Creating account…' : 'Create account'}
+        {busy ? 'Submitting application…' : 'Apply for access'}
       </Button>
       <p className="text-center text-sm text-muted-foreground pt-2">
         Already have an account?{' '}
