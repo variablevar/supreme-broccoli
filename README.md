@@ -6,7 +6,7 @@ The existing marketing landing page, language selection, and theme support are r
 
 ## Rebuild status
 
-Implementation is underway. See [progress](PROGRESS_REPORT.md) for verified milestones and remaining release gates. Do not treat the legacy progress claims as release evidence.
+The production foundation is implemented and verified locally. See [progress](PROGRESS_REPORT.md) for completed milestones and the physical-hardware and staging release gates.
 
 ## Documentation
 
@@ -25,8 +25,8 @@ Implementation is underway. See [progress](PROGRESS_REPORT.md) for verified mile
 apps/platform/       Next.js customer, admin, marketing, and HTTP API
 firmware/esp32-s3/    Physical display firmware
 contracts/           Versioned device protocol
- database/           Schema, migrations, and isolated test fixtures
+database/            Schema, migrations, and isolated test fixtures
  docs/               Product, design, setup, and operations
 ```
 
-Runtime setup instructions will be updated with each implementation milestone. No remote database reset is required to restructure this repository.
+Start with [local development](docs/local-development.md). The new `imo` database schema is isolated from the legacy public schema, so the rebuild does not require an unsafe remote reset.
