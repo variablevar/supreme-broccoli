@@ -2,7 +2,7 @@
 
 The default test workflow is isolated and never sends cryptocurrency or wipes a remote database.
 
-Required coverage: session tampering/expiry/audience; customer/admin/device authorization; exact decimal amount validation; ownership; pairing expiry/replay; withdrawal reservation/rejection/payment transitions; duplicate requests; concurrent balance mutations; shared published state; empty/error dashboard states.
+Required coverage: session tampering/expiry/audience; customer/admin/device authorization; exact decimal amount validation; ownership; pairing expiry/replay; withdrawal reservation/rejection/payment transitions; duplicate requests; concurrent balance mutations; online-only device reward boundaries; shared published state; empty/error dashboard states.
 
 Run the repository checks from the root:
 

@@ -24,7 +24,7 @@ Devices use a separate random credential stored hashed on the server. Pairing co
 
 Published state: operator-authored display content, version and publication timestamp.
 Reported state: heartbeat, uptime, firmware version, and applied publication version.
-Financial state: append-only ledger and outstanding withdrawal reservations.
+Financial state: append-only ledger, online-device daily rewards and outstanding withdrawal reservations. Device heartbeats accumulate eligible online seconds in PostgreSQL; completing a 24-hour cycle writes the reward and audit event atomically.
 
 The dashboard and device read the same publication. A display value never implicitly becomes an account credit. Connectivity is computed from the latest heartbeat, not an operator-controlled online flag.
 

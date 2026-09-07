@@ -21,13 +21,17 @@ pio device monitor
 4. Send one JSON line over USB serial (115200 baud):
 
 ```json
-{"baseUrl":"https://imo.example","token":"<43-character device credential>","caPem":"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"}
+{
+  "baseUrl": "https://imo.example",
+  "token": "<43-character device credential>",
+  "caPem": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+}
 ```
 
 The device stores configuration in NVS and reboots. Tokens are never printed. It requires network time for certificate validation; outbound NTP must be available. No HTTP or insecure TLS fallback exists.
 
 5. Enter the six-character code displayed by the device in the signed-in customer dashboard. The code expires after 15 minutes and is refreshed through the device API.
-6. Publish content from admin. The next sync applies it; the following sync acknowledges the version. The landscape display rotates through overview, real network state, operator-published activity, and published revenue pages every five seconds. Publication values are display information, not account balances.
+6. Publish content from admin. The next sync applies it; the following sync acknowledges the version. The landscape display rotates through account overview, network and power, mining or staking, and wallet/revenue pages every five seconds. Wallet address, account balance and average daily reward come from platform records; the mining profile, capacity and power figures come from the operator publication.
 
 ## Recovery
 

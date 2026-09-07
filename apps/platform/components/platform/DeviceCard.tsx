@@ -26,7 +26,9 @@ export function DeviceCard({ device }: { device: Device }) {
             <div className="rounded-lg bg-secondary/40 p-3">
               <p className="text-xs text-muted-foreground">Activity</p>
               <p data-no-translate className="mt-1 text-sm">
-                {d.content.activity || "—"} · {d.content.rate || "—"}
+                {d.content.currency}{" "}
+                {d.content.isStaking ? "staking" : "mining"} · {d.content.rate}{" "}
+                {d.content.isStaking ? "% APR" : "MH/s"}
               </p>
             </div>
             <div className="rounded-lg bg-secondary/40 p-3">
@@ -39,8 +41,8 @@ export function DeviceCard({ device }: { device: Device }) {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Operator-published information. Your account balance is shown
-            separately.
+            Daily rewards require 24 accumulated online hours. Account credits
+            appear in the transaction ledger.
           </p>
         </div>
       ) : (

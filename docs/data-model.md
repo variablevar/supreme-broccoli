@@ -17,7 +17,7 @@
 
 USDT is represented as decimal strings at the API boundary and exact `numeric(20,6)` in Postgres. Avoid floating-point arithmetic for validation or balance mutation.
 
-Account balance = sum of ledger entries.
+Account balance = sum of ledger entries. Device rewards are append-only `device_daily_reward` entries created after a paired device accumulates a full 24 hours of authenticated online heartbeat time. Offline gaps do not qualify, and every reward has a matching admin audit record.
 Reserved = sum of requested/approved withdrawals.
 Available = account balance - reserved.
 

@@ -6,7 +6,7 @@ Device requests a pairing code while authenticated, then periodically checks syn
 
 Sync request includes protocol version 1, firmware version, boot uptime, RSSI and applied publication version. It cannot include earnings or account credits. Sync updates the heartbeat and returns pairing status, current publication/version, server time and retry interval.
 
-Display content includes title, message, activity label/rate and daily/total published USDT values. These are display information, separate from account funds. Payloads are bounded and validated by both server and firmware.
+Display content includes the mining or staking currency/rate, daily online reward, operator-supplied network capacity and power figures. The authenticated sync response adds the paired customer ID, saved public ERC-20 withdrawal address, ledger balance and calculated average daily device reward. Payloads are bounded and validated by both server and firmware.
 
 Firmware states: provisioning → connecting → unpaired → paired → stale. Revocation returns to an explicit unavailable state. Keep last valid publication on transient failure; never generate mock values. Use bounded HTTP timeouts, reconnect backoff and structured JSON parsing.
 
@@ -17,3 +17,9 @@ Physical release gate: confirm exact ESP32-S3 board, flash/PSRAM and ST7789 wiri
 Operators can publish a custom state to one device or start from one of the built-in operational presets. The fleet publisher targets selected devices, every active device, currently online devices, or currently offline devices. Group publication is one database transaction and increments each target device's existing version independently.
 
 An offline target does not need an active connection. Its new publication remains in the database and is returned by the next authenticated sync. Revoked devices are excluded from every group target.
+
+## Online rewards
+
+Each authenticated heartbeat contributes at most the 40-second online-presence window to the device reward cycle. A longer heartbeat gap contributes zero time, so a powered-off or disconnected device does not earn. Once a paired device accumulates 86,400 online seconds, the database atomically appends its operator-configured daily USDT amount to the customer ledger and adds an operator audit event. Publishing a new device profile starts a fresh cycle so a new rate is never applied retroactively.
+
+The displayed daily revenue is calculated from credited `device_daily_reward` ledger entries. The withdrawal address and connected balance always come from platform account records and cannot be edited in a device publication.

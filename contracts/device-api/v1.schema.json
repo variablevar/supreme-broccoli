@@ -7,26 +7,75 @@
     "syncRequest": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["protocolVersion", "firmware", "uptimeSeconds", "wifiRssi", "appliedVersion"],
+      "required": [
+        "protocolVersion",
+        "firmware",
+        "uptimeSeconds",
+        "wifiRssi",
+        "appliedVersion"
+      ],
       "properties": {
         "protocolVersion": { "const": 1 },
         "firmware": { "type": "string", "minLength": 1, "maxLength": 40 },
-        "uptimeSeconds": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "uptimeSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
         "wifiRssi": { "type": "integer", "minimum": -120, "maximum": 0 },
-        "appliedVersion": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+        "appliedVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
       }
     },
     "displayContent": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["title", "message", "activity", "rate", "dailyUsdt", "totalUsdt"],
+      "required": [
+        "title",
+        "message",
+        "currency",
+        "isStaking",
+        "rate",
+        "dailyUsdt",
+        "downloadMbps",
+        "uploadMbps",
+        "watts",
+        "energyTodayWh"
+      ],
       "properties": {
         "title": { "type": "string", "minLength": 1, "maxLength": 32 },
         "message": { "type": "string", "maxLength": 120 },
-        "activity": { "type": "string", "maxLength": 24 },
-        "rate": { "type": "string", "maxLength": 24 },
-        "dailyUsdt": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,6})?$" },
-        "totalUsdt": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,6})?$" }
+        "currency": {
+          "enum": ["BTC", "ETH", "SOL", "DOGE", "LTC", "XMR", "PEARL"]
+        },
+        "isStaking": { "type": "boolean" },
+        "rate": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,7})(\\.[0-9]{1,3})?$"
+        },
+        "dailyUsdt": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,6})?$"
+        },
+        "downloadMbps": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,7})(\\.[0-9]{1,3})?$"
+        },
+        "uploadMbps": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,7})(\\.[0-9]{1,3})?$"
+        },
+        "watts": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,7})(\\.[0-9]{1,3})?$"
+        },
+        "energyTodayWh": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,7})(\\.[0-9]{1,3})?$"
+        }
       }
     }
   }

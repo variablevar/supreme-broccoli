@@ -15,8 +15,14 @@ test("real customer, operator and device acceptance journey", async ({
   await page
     .getByRole("button", { name: "Apply for access", exact: true })
     .click();
-  await expect(page.getByText("Application received", { exact: true })).toBeVisible();
-  expect((await page.request.post("/api/auth/login", { data: { email, password } })).status()).toBe(401);
+  await expect(
+    page.getByText("Application received", { exact: true }),
+  ).toBeVisible();
+  expect(
+    (
+      await page.request.post("/api/auth/login", { data: { email, password } })
+    ).status(),
+  ).toBe(401);
   const admin = await playwright.request.newContext({
     baseURL: "http://127.0.0.1:3100",
   });
@@ -40,15 +46,25 @@ test("real customer, operator and device acceptance journey", async ({
     ).ok(),
   ).toBeTruthy();
   const overview = await (await admin.get("/api/admin/overview")).json();
-  const application = overview.applications.find((item: { email: string }) => item.email === email);
+  const application = overview.applications.find(
+    (item: { email: string }) => item.email === email,
+  );
   expect(application).toBeTruthy();
-  expect((await admin.post(`/api/admin/registrations/${application.id}/decide`, { data: { decision: "approved" } })).ok()).toBeTruthy();
+  expect(
+    (
+      await admin.post(`/api/admin/registrations/${application.id}/decide`, {
+        data: { decision: "approved" },
+      })
+    ).ok(),
+  ).toBeTruthy();
   await page.goto("/login");
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: /sign in/i }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByText("No devices paired yet.", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText("No devices paired yet.", { exact: false }),
+  ).toBeVisible();
   const customer = page.request;
   expect((await customer.get("/api/admin/overview")).status()).toBe(401);
   const account = await (await customer.get("/api/account")).json();
@@ -82,10 +98,14 @@ test("real customer, operator and device acceptance journey", async ({
   const content = {
     title: "Office production",
     message: "Operator publication",
-    activity: "Compute",
-    rate: "42 jobs",
+    currency: "BTC",
+    isStaking: false,
+    rate: "42",
     dailyUsdt: "1.25",
-    totalUsdt: "10",
+    downloadMbps: "87.5",
+    uploadMbps: "15.3",
+    watts: "42",
+    energyTodayWh: "816",
   };
   expect(
     (
@@ -116,9 +136,7 @@ test("real customer, operator and device acceptance journey", async ({
   await page.getByRole("button", { name: "Save address", exact: true }).click();
   await expect(page.getByText("Withdrawal address saved.")).toBeVisible();
   await page.getByLabel("Amount (USDT)", { exact: true }).fill("100");
-  await page
-    .getByRole("button", { name: /request withdrawal/i })
-    .click();
+  await page.getByRole("button", { name: /request withdrawal/i }).click();
   await expect(
     page.getByText("Withdrawal requested.", { exact: true }),
   ).toBeVisible();

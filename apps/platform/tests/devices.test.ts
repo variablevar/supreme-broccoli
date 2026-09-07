@@ -12,10 +12,14 @@ import { PUBLICATION_PRESETS } from "../modules/devices/publication-presets";
 const content = {
   title: "Test display",
   message: "Published by operator",
-  activity: "Compute",
-  rate: "42 jobs",
+  currency: "BTC" as const,
+  isStaking: false,
+  rate: "42",
   dailyUsdt: "1.250000",
-  totalUsdt: "12.500000",
+  downloadMbps: "87.5",
+  uploadMbps: "15.3",
+  watts: "42",
+  energyTodayWh: "816",
 };
 test("device protocol rejects financial telemetry and unsupported shapes", () => {
   const heartbeat = {
@@ -40,7 +44,7 @@ test("device protocol rejects financial telemetry and unsupported shapes", () =>
   );
   assert.equal(pairingInput.safeParse({ code: "ABC123" }).success, false);
   assert.equal(pairingInput.parse({ code: " abc234 " }).code, "ABC234");
-  assert.equal(PUBLICATION_PRESETS.length, 13);
+  assert.equal(PUBLICATION_PRESETS.length, 14);
   for (const preset of PUBLICATION_PRESETS)
     assert.ok(displayContent.safeParse(preset.content).success, preset.id);
   assert.equal(
@@ -87,6 +91,64 @@ test("bulk publication targets device presence groups and increments versions", 
       "select count(*)::int count from imo.admin_audit_log where action='device.publish.bulk'",
     );
     assert.equal(audit.rows[0].count, 3);
+  } finally {
+    await db.close();
+  }
+});
+test("daily rewards require a full day of authenticated online heartbeat time", async () => {
+  const db = await database();
+  try {
+    const user = randomUUID();
+    await db.query(
+      "insert into imo.users(id,uid,email) values ($1,'IMO-REWARD','reward@example.com')",
+      [user],
+    );
+    const {
+      rows: [{ id }],
+    } = await db.query<{ id: string }>(
+      "select imo.provision_device('IMO-REWARD-DEVICE','Reward device','reward-hash','admin@example.com') id",
+    );
+    await db.query("update imo.devices set user_id=$1 where id=$2", [user, id]);
+    await db.query("select imo.publish_device($1,$2,0,'admin@example.com')", [
+      id,
+      JSON.stringify(content),
+    ]);
+    await db.query("select imo.sync_device($1,'1.0',1,-50,0)", [id]);
+    await db.query(
+      "update imo.device_reward_state set accumulated_online_seconds=86390,last_heartbeat_at=clock_timestamp()-interval '20 seconds' where device_id=$1",
+      [id],
+    );
+    const {
+      rows: [{ sync }],
+    } = await db.query<{
+      sync: {
+        account: {
+          connectedWalletUsdt: string;
+          dailyRevenueUsdt: string;
+          reward: { creditedUsdt: string };
+        };
+      };
+    }>("select imo.sync_device($1,'1.0',21,-50,0) sync", [id]);
+    assert.equal(sync.account.reward.creditedUsdt, "1.250000");
+    assert.equal(sync.account.connectedWalletUsdt, "1.250000");
+    assert.equal(sync.account.dailyRevenueUsdt, "1.250000");
+    await db.query(
+      "update imo.device_reward_state set accumulated_online_seconds=86390,last_heartbeat_at=clock_timestamp()-interval '50 seconds' where device_id=$1",
+      [id],
+    );
+    await db.query("select imo.sync_device($1,'1.0',71,-50,0)", [id]);
+    const {
+      rows: [{ count }],
+    } = await db.query<{ count: number }>(
+      "select count(*)::int count from imo.balance_ledger where kind='device_daily_reward'",
+    );
+    assert.equal(count, 1);
+    const {
+      rows: [{ audit }],
+    } = await db.query<{ audit: number }>(
+      "select count(*)::int audit from imo.admin_audit_log where action='device.reward.credited'",
+    );
+    assert.equal(audit, 1);
   } finally {
     await db.close();
   }

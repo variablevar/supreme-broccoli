@@ -424,12 +424,8 @@ function Publish({
   function edit() {
     setContent(
       device.content || {
+        ...EMPTY_PUBLICATION,
         title: device.name.replace(/[^\x20-\x7E]/g, "").slice(0, 32) || "Imo",
-        message: "",
-        activity: "",
-        rate: "",
-        dailyUsdt: "0",
-        totalUsdt: "0",
       },
     );
     setVersion(device.version || 0);
@@ -526,38 +522,18 @@ function Publish({
                 </p>
               </PublicationSection>
               <PublicationSection title="Page 2 · Network">
-                <p className="text-xs text-muted-foreground">
-                  Wi-Fi connection, signal strength, server sync and uptime are
-                  reported by the device and cannot be edited.
-                </p>
+                <MetricFields
+                  content={content}
+                  setContent={setContent}
+                  group="all"
+                />
               </PublicationSection>
-              <PublicationSection title="Page 3 · Activity">
-                <PublicationField
-                  label="Current activity"
-                  field="activity"
-                  max={24}
-                  content={content}
-                  setContent={setContent}
-                />
-                <PublicationField
-                  label="Rate and unit"
-                  field="rate"
-                  max={24}
-                  content={content}
-                  setContent={setContent}
-                />
+              <PublicationSection title="Page 3 · Mining or staking">
+                <MiningFields content={content} setContent={setContent} />
               </PublicationSection>
               <PublicationSection title="Page 4 · Revenue">
                 <PublicationField
-                  label="Published total USDT"
-                  field="totalUsdt"
-                  max={16}
-                  required
-                  content={content}
-                  setContent={setContent}
-                />
-                <PublicationField
-                  label="Published daily USDT"
+                  label="Daily online reward (USDT)"
                   field="dailyUsdt"
                   max={16}
                   required
@@ -573,8 +549,9 @@ function Publish({
                 />
               </PublicationSection>
               <p className="text-xs text-muted-foreground">
-                Display text currently supports ASCII. Publishing does not
-                change account balances.
+                Publishing resets the current online reward cycle. The
+                configured daily amount is credited only after 24 accumulated
+                online hours.
               </p>
               <div className="flex gap-3">
                 <button disabled={busy} className={buttonClass}>
@@ -744,20 +721,7 @@ function BulkPublish({
             content={content}
             setContent={setContent}
           />
-          <PublicationField
-            label="Activity"
-            field="activity"
-            max={24}
-            content={content}
-            setContent={setContent}
-          />
-          <PublicationField
-            label="Rate and unit"
-            field="rate"
-            max={24}
-            content={content}
-            setContent={setContent}
-          />
+          <MiningFields content={content} setContent={setContent} />
           <PublicationField
             label="Daily USDT"
             field="dailyUsdt"
@@ -766,14 +730,7 @@ function BulkPublish({
             content={content}
             setContent={setContent}
           />
-          <PublicationField
-            label="Total USDT"
-            field="totalUsdt"
-            max={16}
-            required
-            content={content}
-            setContent={setContent}
-          />
+          <MetricFields content={content} setContent={setContent} group="all" />
           <PublicationField
             label="Message"
             field="message"
@@ -784,7 +741,8 @@ function BulkPublish({
         </div>
         <p className="text-xs text-muted-foreground">
           Offline devices receive the publication on their next successful sync.
-          Publishing display values does not change customer balances.
+          Publishing starts a fresh reward cycle; only authenticated online
+          heartbeat time qualifies.
         </p>
         <button disabled={busy || targetCount === 0} className={buttonClass}>
           {busy
@@ -817,6 +775,107 @@ function PublicationSection({
     </fieldset>
   );
 }
+function MiningFields({
+  content,
+  setContent,
+}: {
+  content: Publication;
+  setContent: (content: Publication) => void;
+}) {
+  return (
+    <>
+      <Field label="Currency">
+        <select
+          value={content.currency}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              currency: e.target.value as Publication["currency"],
+            })
+          }
+          className={inputClass}
+        >
+          {["BTC", "ETH", "SOL", "DOGE", "LTC", "XMR", "PEARL"].map(
+            (currency) => (
+              <option key={currency}>{currency}</option>
+            ),
+          )}
+        </select>
+      </Field>
+      <Field label="Activity type">
+        <select
+          value={content.isStaking ? "staking" : "mining"}
+          onChange={(e) =>
+            setContent({ ...content, isStaking: e.target.value === "staking" })
+          }
+          className={inputClass}
+        >
+          <option value="mining">Mining (proof of work)</option>
+          <option value="staking">Staking (proof of stake)</option>
+        </select>
+      </Field>
+      <PublicationField
+        label={content.isStaking ? "Rate (% APR)" : "Rate (MH/s)"}
+        field="rate"
+        max={16}
+        required
+        content={content}
+        setContent={setContent}
+      />
+    </>
+  );
+}
+function MetricFields({
+  content,
+  setContent,
+  group,
+}: {
+  content: Publication;
+  setContent: (content: Publication) => void;
+  group: "network" | "all";
+}) {
+  return (
+    <>
+      <PublicationField
+        label="Download (Mbps)"
+        field="downloadMbps"
+        max={16}
+        required
+        content={content}
+        setContent={setContent}
+      />
+      <PublicationField
+        label="Upload (Mbps)"
+        field="uploadMbps"
+        max={16}
+        required
+        content={content}
+        setContent={setContent}
+      />
+      {group === "all" && (
+        <>
+          <PublicationField
+            label="Power (watts)"
+            field="watts"
+            max={16}
+            required
+            content={content}
+            setContent={setContent}
+          />
+          <PublicationField
+            label="Energy today (Wh)"
+            field="energyTodayWh"
+            max={16}
+            required
+            content={content}
+            setContent={setContent}
+          />
+        </>
+      )}
+    </>
+  );
+}
+type PublicationTextField = Exclude<keyof Publication, "isStaking">;
 function PublicationField({
   label,
   field,
@@ -826,7 +885,7 @@ function PublicationField({
   setContent,
 }: {
   label: string;
-  field: keyof Publication;
+  field: PublicationTextField;
   max: number;
   required?: boolean;
   content: Publication;

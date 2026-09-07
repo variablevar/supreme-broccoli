@@ -6,14 +6,19 @@ const ascii = (max: number) =>
     .max(max)
     .regex(/^[\x20-\x7E]*$/, "Device text currently supports printable ASCII");
 const publishedAmount = z.string().regex(/^(0|[1-9]\d{0,8})(\.\d{1,6})?$/);
+const metric = z.string().regex(/^(0|[1-9]\d{0,7})(\.\d{1,3})?$/);
 export const displayContent = z
   .object({
     title: ascii(32).min(1),
     message: ascii(120),
-    activity: ascii(24),
-    rate: ascii(24),
+    currency: z.enum(["BTC", "ETH", "SOL", "DOGE", "LTC", "XMR", "PEARL"]),
+    isStaking: z.boolean(),
+    rate: metric,
     dailyUsdt: publishedAmount,
-    totalUsdt: publishedAmount,
+    downloadMbps: metric,
+    uploadMbps: metric,
+    watts: metric,
+    energyTodayWh: metric,
   })
   .strict();
 export const publishInput = z

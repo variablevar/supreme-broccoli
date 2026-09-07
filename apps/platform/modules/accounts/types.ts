@@ -2,10 +2,14 @@ import type { LanguageCode, ThemePreference } from "@/types";
 export interface Publication {
   title: string;
   message: string;
-  activity: string;
+  currency: "BTC" | "ETH" | "SOL" | "DOGE" | "LTC" | "XMR" | "PEARL";
+  isStaking: boolean;
   rate: string;
   dailyUsdt: string;
-  totalUsdt: string;
+  downloadMbps: string;
+  uploadMbps: string;
+  watts: string;
+  energyTodayWh: string;
 }
 export interface Device {
   id: string;
@@ -38,6 +42,7 @@ export interface LedgerEntry {
   amount_usdt: string;
   note: string;
   created_at: string;
+  kind: "admin_adjustment" | "withdrawal_paid" | "device_daily_reward";
 }
 export interface Profile {
   id: string;
@@ -58,7 +63,15 @@ export interface Account {
   ledger: LedgerEntry[];
 }
 export interface OperatorOverview {
-  applications: { id:string; email:string; status:'pending'|'approved'|'rejected'; created_at:string; reviewed_by:string|null; reviewed_at:string|null; rejection_reason:string|null }[];
+  applications: {
+    id: string;
+    email: string;
+    status: "pending" | "approved" | "rejected";
+    created_at: string;
+    reviewed_by: string | null;
+    reviewed_at: string | null;
+    rejection_reason: string | null;
+  }[];
   users: {
     id: string;
     email: string;
