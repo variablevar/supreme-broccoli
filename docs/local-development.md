@@ -20,6 +20,14 @@ pnpm dev
 
 The customer UI is at `/dashboard`, the operator console is at `/admin`, and the retained marketing site is `/`. Operator first login requires a new password and TOTP enrollment. Customers self-register and may enable TOTP from Settings.
 
+To test a provisioned node without hardware, save its one-time credential as `NODE_KEY` in the ignored `.env.local` file and run:
+
+```bash
+pnpm --filter @imo/platform simulate:device
+```
+
+Enter the printed pairing code on the customer Devices page. Keep the command running while an operator publishes display content; the simulator reports heartbeats, prints the returned publication, and acknowledges its version on the following sync.
+
 Use the disposable integration stack for database and browser tests:
 
 ```bash
