@@ -249,7 +249,7 @@ test("forged cookies, foreign origins and unknown device credentials fail", asyn
   ).toBe(401);
 });
 
-test("landing page retains its sections and uses a text wordmark", async ({
+test("landing page retains its sections and restored image branding", async ({
   page,
 }) => {
   await page.goto("/");
@@ -262,5 +262,6 @@ test("landing page retains its sections and uses a text wordmark", async ({
   await expect(page.locator("nav").first()).toBeVisible();
   await expect(page.locator("#engines")).toBeVisible();
   await expect(page.locator("#pricing")).toBeVisible();
-  await expect(page.locator('img[src*="imnoshi-logo"]')).toHaveCount(0);
+  await expect(page.locator('nav img[src*="imnoshi-logo"]')).toBeVisible();
+  await expect(page.locator('img[src*="imnoshi-logo-full"]')).toBeVisible();
 });
