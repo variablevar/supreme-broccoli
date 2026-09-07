@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import { NAV_LINKS } from '@/lib/constants';
 import { MagneticButton } from '@/components/shared/MagneticButton';
 import { BrandLogo } from '@/components/shared/BrandLogo';
+import { LiveBrand } from '@/components/shared/LiveBrand';
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -14,6 +15,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <BrandLogo size={42} />
+          <LiveBrand compact />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
